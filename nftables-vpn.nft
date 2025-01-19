@@ -1,0 +1,19 @@
+flush ruleset
+
+table ip mangle {
+  chain prerouting {
+    type filter hook prerouting priority -100; policy accept;
+
+    # Preserve DSCP for incoming traffic on the commercial-vpn interface
+    iffname commercial-vpn ip dscp set meta dscp
+
+  }
+
+  chain postrouting {
+    type nat hook postrouting priority 200; policy accept;
+
+    # Preserve DSCP for outgoing traffic on the commercial-vpn interface
+    oifname commercial-vpn meta dscp set ip dscp
+
+  }
+}
