@@ -6,7 +6,7 @@
 
 {
   boot = {
-  supportedFilesystems = [ "bcachefs" ];
+    supportedFilesystems = [ "bcachefs" ];
     loader = {
       grub = {
         enable = true;
@@ -17,18 +17,21 @@
     };
   };
 
-  nixpkgs.config.packageOverrides = pkgs: pkgs.lib.recursiveUpdate pkgs {                               
-    linuxKernel.kernels.linux = pkgs.linuxKernel.kernels.linux.override {                               
-      extraConfig = ''                                                                                  
-        CONFIG_BCACHEFS_ERASURE_CODING y                                                                
-      '';                                                                                               
-    };                                                                                                  
-  };
-
+  nixpkgs.config.packageOverrides = pkgs:
+    pkgs.lib.recursiveUpdate pkgs {
+      linuxKernel.kernels.linux = pkgs.linuxKernel.kernels.linux.override {
+        extraConfig = ''
+          CONFIG_BCACHEFS_ERASURE_CODING y                                                                
+        '';
+      };
+    };
 
   nixpkgs.config.allowUnfree = true;
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    extra-sandbox-paths = [ "/srv/secrets" ];
+  };
 
   time.timeZone = "US/Central";
 
@@ -40,9 +43,9 @@
     };
     samba = {
       enable = true;
-      securityType = "user";
       settings = {
         global = {
+          "security" = "user";
           "workgroup" = "WORKGROUP";
           "server string" = "smbnix";
           "netbios name" = "smbnix";
@@ -56,7 +59,7 @@
           "path" = "/srv/shares/";
           "browseable" = "yes";
           "read only" = "no";
-	  "guest ok" = "no";
+          "guest ok" = "no";
         };
       };
     };
@@ -71,30 +74,8 @@
       };
     };
 
-    kerberos_server = {
-      enable = true;
-      settings = {
-        realms."SILVERDEV.LOCAL" = {
-        };
-      };
-    };
-
-    smartd = {
-      enable = true;
-    };
+    smartd = { enable = true; };
     jellyfin.enable = true;
-  };
-
-  security.krb5 = {
-    enable = true;
-    settings = {
-      libdefaults.default_realm = "SILVERDEV.LOCAL";
-      realms."SILVERDEV.LOCAL" = {
-        kdc = "10.48.0.1";
-        admin_server = "10.48.0.1";
-	auth_to_local = "DEFAULT";
-      };
-    };
   };
 
   systemd.services = {
@@ -104,29 +85,25 @@
 
   users = {
     mutableUsers = true;
-    groups = {
-      share = {};
-    };
+    groups = { share = { }; };
     users = {
       silverdev2482 = {
         isNormalUser = true;
         extraGroups = [ "wheel" "minecraft" "share" ];
       };
 
-
       share = {
         isSystemUser = true;
-	group = "share";
+        group = "share";
       };
       deluge = {
-	isSystemUser = true;
+        isSystemUser = true;
         extraGroups = [ "share" ];
       };
       jellyfin = {
-	isSystemUser = true;
+        isSystemUser = true;
         extraGroups = [ "share" ];
       };
-
 
       royalspade = {
         isNormalUser = true;
@@ -136,7 +113,6 @@
         isNormalUser = true;
         extraGroups = [ "share" ];
       };
-
 
     };
   };
