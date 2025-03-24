@@ -42,8 +42,9 @@
             keaSettings = {
               pools = [{ pool = "10.48.1.2 - 10.48.1.254"; }];
               reservations = [
-                { hw-address = "48:4d:7e:f9:06:7a"; ip-address = "10.48.0.128"; }
-                { hw-address = "D4:5D:64:8B:6B:60"; ip-address = "10.48.0.64"; }
+                { hw-address = "48:4D:7E:F9:06:7A"; ip-address = "10.48.0.128"; }
+                { hw-address = "DC:A6:32:14:6F:83"; ip-address = "10.48.0.129"; }
+                { hw-address = "D4:5D:64:7B:6B:60"; ip-address = "10.48.0.64"; }
                 { hw-address = "0C:9D:92:2C:4D:10"; ip-address = "10.48.0.65"; }
               ];
             };
@@ -132,6 +133,7 @@
   networking = {
     wireguard.interfaces = {
       commercial-vpn = {
+        # Public key is: +k1Ly60puFUTM39Ds4efy9ZMoCynnLmu0wErsaJvpls=
         privateKey = builtins.readFile "/srv/secrets/commercial-vpn.key";
 
         interfaceNamespace = "vpn";
@@ -151,6 +153,7 @@
         ips = [ "10.48.224.1/24" ];
         peers = [
           {
+            #
             publicKey = "9ebQTGgXBOEVscX6oT/GBQ2MwsQdrtoev22Z1aXb5k8=";
             persistentKeepalive = 25;
             allowedIPs = [ "10.48.224.2/32" ];
@@ -164,6 +167,30 @@
             publicKey = "NH4dlhzjZbP1ABYmU//c0fq7prgXtDxbzGLTuWv9Tys=";
             persistentKeepalive = 25;
             allowedIPs = [ "10.48.224.4/32" ];
+          }
+          {
+            #
+            publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.5/32" ];
+          }
+          {
+            # Louis' T480
+            publicKey = "/yJI0Y0DrBqE23jnp5WnnhSRpTi+yEv5JIkqXmpWIWk=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.6/32" ];
+          }
+          {
+            # Mom's phone
+            publicKey = "fT8TAqpDhtMvoWfoLfTHgGRL2KPeXIRD1UqqWpABaCc=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.7/32" ];
+          }
+          {
+            # Joey's PC
+            publicKey = "Nbl7jc2zqUz7qDRXd/vm+5ul1c8L49/zFefyYH0aaGk=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.8/32" ];
           }
         ];
       };

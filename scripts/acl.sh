@@ -4,67 +4,54 @@ root_directory=/srv/shares
 user=$2
 directory="${root_directory}/Users/${2^}"
 
-remove_acls_chown () {
+reset_acls_flat () {
+  setfacl -b $1
+  chown root:root $1
+  chmod 2770 $1
+  setfacl -m m::rwx $1
+  setfacl -dm m::rwx $1
+}
+
+reset_acls_recursive () {
   setfacl -b $1
   setfacl -Rb $1
 
-  chmod -r 2700 $1
+  chown root:root $1
+  chown -R root:root $1
 
-  chown share:share $1
-  chown -R share:share $1
-}
-
-
-set_mask () {
+  chmod 2770 -R $1
   setfacl -Rm m::rwx $1
   setfacl -Rdm m::rwx $1
 }
 
-set_user () {
+set_user_recursive () {
   setfacl -Rm u:$1:rwx $2
   setfacl -Rdm u:$1:rwx $2
 }
 
-set_group_private () {
+set_private_recursive () {
   setfacl -Rm g:share:--- $1
   setfacl -Rdm g:share:--- $1
-  chmod -r 2700 $_directory
 }
 
-set_group_share_read () {
+set_public_read_only_flat () {
+  setfacl -m g:share:r-x $1
+  setfacl -dm g:share:r-x $1
+}
+
+set_public_read_only_recursive () {
   setfacl -Rm g:share:r-x $1
   setfacl -Rdm g:share:r-x $1
 }
 
-set_group_share_write () {
-  setfacl -Rm g:share:rwx $1
-  setfacl -Rdm g:share:rwx $1
-  chmod -r 2770 $1
-}
-
-set_public () {
-  remove_acls $1
-  set_mask $1
-  set_user share $1
-  set_group_share_write $1
-}
-
-set_public_flat () {
-  setfacl -m m::rwx $1
-  setfacl -dm m::rwx $1
-  setfacl -m u:share:rwx $1
-  setfacl -dm u:share:rwx $1
+set_public_writable_flat () {
   setfacl -m g:share:rwx $1
   setfacl -dm g:share:rwx $1
 }
 
-set_read_only () {
-  setfacl -m m::rwx $1
-  setfacl -dm m::rwx $1
-  setfacl -m u:share:r-x $1
-  setfacl -dm u:share:r-x $1
-  setfacl -m g:share:r-x $1
-  setfacl -dm g:share:r-x $1
+set_public_writable_recursive () {
+  setfacl -Rm g:share:rwx $1
+  setfacl -Rdm g:share:rwx $1
 }
 
 setup_user_without_group () {
@@ -78,41 +65,39 @@ setup_user_without_group () {
     fi
 
     mkdir -p $2
-    remove_acls $2
-    set_mask $2
-    set_user $1 $2
+    reset_acls_recursive $2
+    set_user_recursive $1 $2
 }
 
 case "$1" in
   public_user)
     setup_user_without_group $user $directory
-    set_group_share_read $directory 
+    set_public_read_only_recursive $directory 
     echo "Set permissions for $user with read access for other users"
     ;;
-   private_user)
+  private_user)
     setup_user_without_group $user $directory
-    set_group_private $directory
+    set_private_recursive $directory
     echo "Set permissions for $user with no access to other users"
     ;;
   root)
     echo "Setting permissions for root folder"
+    
+    mkdir -p $root_directory/Users
+    mkdir -p $root_directory/Groups
 
-    setfacl -b $root_directory
-    chown share:share $root_directory
-    chmod 2770 $root_directory
-
-    set_public_flat $root_directory
+    reset_acls_flat $root_directory
+    set_public_writable_flat $root_directory
 
     # Sets the acls on all the directories inside /srv/shares except for Users, recursively
-    export -f remove_acls
-    export -f set_public
-    export -f remove_acls
-    export -f set_mask
-    export -f set_user
-    export -f set_group_share_write
-    find /srv/shares/ -maxdepth 1 -type d ! -path /srv/shares/Users -execdir bash -c 'remove_acls "$0"' {} \;
-    find /srv/shares/ -maxdepth 1 -type d ! -path /srv/shares/Users -execdir bash -c 'set_public "$0"' {} \;
-    set_read_only $root_directory/Users
+    export -f reset_acls_recursive
+    export -f set_public_writable_recursive
+    find /srv/shares/ -mindepth 1 -maxdepth 1 ! -path /srv/shares/Users ! -path /srv/shares/Groups -execdir bash -c 'reset_acls_recursive "$0"; set_public_writable_recursive "$0"' {} \;
+
+    reset_acls_flat  $root_directory/Users
+    reset_acls_flat  $root_directory/Groups
+    set_public_read_only_flat $root_directory/Users
+    set_public_read_only_flat $root_directory/Groups
 
     echo "Set permissions for the root directory and contents."
     echo "This part of the script does not handle the individual"
@@ -120,6 +105,6 @@ case "$1" in
     ;;
 
   *)
-    echo "./user-acl.sh { root | public_user | private_user } <user> <directory>"
+    echo "./user-acl.sh { root | public_user | private_user } <user>"
     ;;
 esac

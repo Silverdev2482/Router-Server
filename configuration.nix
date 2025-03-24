@@ -36,16 +36,10 @@
   time.timeZone = "US/Central";
 
   services = {
-    deluge = {
-      enable = true;
-      web.enable = true;
-      package = pkgs.deluge-2_x;
-    };
     samba = {
       enable = true;
       settings = {
         global = {
-          "security" = "user";
           "workgroup" = "WORKGROUP";
           "server string" = "smbnix";
           "netbios name" = "smbnix";
@@ -54,6 +48,9 @@
           "hosts allow" = "10.48.0.0/16 localhost";
           "guest account" = "nobody";
           "map to guest" = "bad user";
+          # Apple is more retarded than even me
+          "vfs objects" = "fruit streams_xattr";
+          "nt acl support" = "no";
         };
         "shares" = {
           "path" = "/srv/shares/";
@@ -74,30 +71,56 @@
       };
     };
 
+    geoipupdate = {
+      enable = true;
+      settings = {
+        AccountID = 1116655;
+        LicenseKey = { _secret = "/srv/secrets/geoip.key"; };
+        EditionIDs = [ "GeoLite2-Country" ];
+      };
+    };
+
     smartd = { enable = true; };
     jellyfin.enable = true;
   };
 
   systemd.services = {
-    deluged.serviceConfig.NetworkNamespacePath = "/run/netns/vpn";
-    delugeweb.serviceConfig.NetworkNamespacePath = "/run/netns/vpn";
+    qbittorrent = {
+      # based on the plex.nix service module and
+      # https://github.com/qbittorrent/qBittorrent/blob/master/dist/unix/systemd/qbittorrent-nox%40.service.in
+      description = "qBittorrent-nox service";
+      documentation = [ "man:qbittorrent-nox(1)" ];
+      after = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        User = "qbittorrent";
+        ExecStart = "${pkgs.qbittorrent-nox}/bin/qbittorrent-nox --profile=/var/lib";
+        NetworkNamespacePath = "/run/netns/vpn";
+      };
+    };
   };
+
 
   users = {
     mutableUsers = true;
-    groups = { share = { }; };
+    groups = {
+      share = { };
+      qbittorrent = {};
+      holub = {};
+    };
     users = {
       silverdev2482 = {
         isNormalUser = true;
         extraGroups = [ "wheel" "minecraft" "share" ];
       };
-
       share = {
         isSystemUser = true;
         group = "share";
       };
-      deluge = {
+      qbittorrent = {
         isSystemUser = true;
+        group = "qbittorrent";
         extraGroups = [ "share" ];
       };
       jellyfin = {
@@ -113,6 +136,16 @@
         isNormalUser = true;
         extraGroups = [ "share" ];
       };
+      joey = {
+        isNormalUser = true;
+        extraGroups = [ "share" ];
+      };
+
+
+      julie = {
+        isNormalUser = true;
+        extraGroups = [ "share" "holub" ];
+      };
 
     };
   };
@@ -120,6 +153,8 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    python314
+    unison
     inputs.my-nvf.packages.x86_64-linux.default
     wget
     tmux
@@ -142,7 +177,7 @@
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "unstable"; # Did you read the comment?
+  system.stateVersion = "25.05"; # Did you read the comment?
 
 }
 
