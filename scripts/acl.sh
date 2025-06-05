@@ -4,6 +4,16 @@ root_directory=/srv/shares
 user=$2
 directory="${root_directory}/Users/${2^}"
 
+rd_setfacl () {
+  setfacl -Rm $1 $2
+  setfacl -Rdm $1 $2
+}
+
+d_setfacl () {
+  setfacl -m $1 $2
+  setfacl -dm $1 $2
+}
+
 reset_acls_flat () {
   setfacl -b $1
   chown root:root $1
@@ -20,38 +30,32 @@ reset_acls_recursive () {
   chown -R root:root $1
 
   chmod 2770 -R $1
-  setfacl -Rm m::rwx $1
-  setfacl -Rdm m::rwx $1
-}
-
-set_user_recursive () {
-  setfacl -Rm u:$1:rwx $2
-  setfacl -Rdm u:$1:rwx $2
+  rd_setfacl m::rwx $1
 }
 
 set_private_recursive () {
-  setfacl -Rm g:share:--- $1
-  setfacl -Rdm g:share:--- $1
+  rd_setfacl g:share:--- $1
+  rd_setfacl g:guest:--- $1
 }
 
 set_public_read_only_flat () {
-  setfacl -m g:share:r-x $1
-  setfacl -dm g:share:r-x $1
+  d_setfacl g:share:r-x $1
+  d_setfacl g:guest:--x $1
 }
 
 set_public_read_only_recursive () {
-  setfacl -Rm g:share:r-x $1
-  setfacl -Rdm g:share:r-x $1
+  rd_setfacl g:share:r-x $1
+  rd_setfacl g:guest:--x $1
 }
 
 set_public_writable_flat () {
-  setfacl -m g:share:rwx $1
-  setfacl -dm g:share:rwx $1
+  d_setfacl g:share:rwx $1
+  d_setfacl g:guest:--x $1
 }
 
 set_public_writable_recursive () {
-  setfacl -Rm g:share:rwx $1
-  setfacl -Rdm g:share:rwx $1
+  rd_setfacl g:share:rwx $1
+  rd_setfacl g:guest:--x $1
 }
 
 setup_user_without_group () {
@@ -66,13 +70,13 @@ setup_user_without_group () {
 
     mkdir -p $2
     reset_acls_recursive $2
-    set_user_recursive $1 $2
+    rd_setfacl u:$1:rwx $2
 }
 
 case "$1" in
   public_user)
     setup_user_without_group $user $directory
-    set_public_read_only_recursive $directory 
+    set_public_read_only_recursive $directory what is the non default acl called?
     echo "Set permissions for $user with read access for other users"
     ;;
   private_user)
@@ -90,18 +94,19 @@ case "$1" in
     set_public_writable_flat $root_directory
 
     # Sets the acls on all the directories inside /srv/shares except for Users, recursively
+    export -f rd_setfacl
     export -f reset_acls_recursive
     export -f set_public_writable_recursive
     find /srv/shares/ -mindepth 1 -maxdepth 1 ! -path /srv/shares/Users ! -path /srv/shares/Groups -execdir bash -c 'reset_acls_recursive "$0"; set_public_writable_recursive "$0"' {} \;
 
-    reset_acls_flat  $root_directory/Users
-    reset_acls_flat  $root_directory/Groups
+    reset_acls_flat $root_directory/Users
+    reset_acls_flat $root_directory/Groups
     set_public_read_only_flat $root_directory/Users
     set_public_read_only_flat $root_directory/Groups
 
     echo "Set permissions for the root directory and contents."
     echo "This part of the script does not handle the individual"
-    echo "user directories so make sure to run it on those also."
+    echo "user and group directories so don't forget about them."
     ;;
 
   *)

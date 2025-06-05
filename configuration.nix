@@ -44,6 +44,8 @@
           "server string" = "smbnix";
           "netbios name" = "smbnix";
           "security" = "user";
+          # Won't let me change the capitalization to something else if I keep the same name without forcing case sensitivity
+          "case sensitive" = "yes"; 
           # note: localhost is the ipv6 localhost ::1
           "hosts allow" = "10.48.0.0/16 localhost";
           "guest account" = "nobody";
@@ -61,51 +63,62 @@
       };
     };
     samba-wsdd.enable = true;
-    avahi = {
+    znc = {
       enable = true;
-      hostName = "Router-Server";
-      allowInterfaces = [ "lan0" "veth0" ];
-      publish = {
-        enable = true;
-        userServices = true;
-      };
+      mutable = true;
+      useLegacyConfig = false;
     };
-
-    geoipupdate = {
-      enable = true;
-      settings = {
-        AccountID = 1116655;
-        LicenseKey = { _secret = "/srv/secrets/geoip.key"; };
-        EditionIDs = [ "GeoLite2-Country" ];
-      };
-    };
-
     smartd = { enable = true; };
+    immich = {
+      enable = true;
+      host = "10.48.224.5";
+    };
     jellyfin.enable = true;
+    pixiecore = {
+      enable = true;
+      dhcpNoBind = true;
+      kernel = "https://boot.netboot.xyz";
+    };
+    postgresql = {
+      enable = true;
+      settings.timezone = "US/Central";
+      authentication = "host all all 127.0.0.1/32 scram-sha-256";
+    };
   };
 
   systemd.services = {
-    qbittorrent = {
+    qBittorrent-public = {
       # based on the plex.nix service module and
       # https://github.com/qbittorrent/qBittorrent/blob/master/dist/unix/systemd/qbittorrent-nox%40.service.in
-      description = "qBittorrent-nox service";
+      description = "qBittorrent-nox service for public trackers";
       documentation = [ "man:qbittorrent-nox(1)" ];
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "simple";
         User = "qbittorrent";
-        ExecStart = "${pkgs.qbittorrent-nox}/bin/qbittorrent-nox --profile=/var/lib";
+        ExecStart = "${pkgs.qbittorrent-nox}/bin/qbittorrent-nox --profile=/var/lib/qBittorrent-public";
         NetworkNamespacePath = "/run/netns/vpn";
       };
     };
+    qBittorrent-private = {
+      description = "qBittorrent-nox service for private trackers";
+      documentation = [ "man:qbittorrent-nox(1)" ];
+      after = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        User = "qbittorrent";
+        ExecStart = "${pkgs.qbittorrent-nox}/bin/qbittorrent-nox --profile=/var/lib/qBittorrent-private --webui-port=56080";
+      };
+    };
   };
-
 
   users = {
     mutableUsers = true;
     groups = {
       share = { };
+      guest = { };
       qbittorrent = {};
       holub = {};
     };
@@ -141,6 +154,10 @@
         extraGroups = [ "share" ];
       };
 
+      TheRealmer = {
+        isNormalUser = true;
+        extraGroups = [ "minecraft" "share" ];
+      };
 
       julie = {
         isNormalUser = true;
@@ -153,9 +170,12 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    jdk21_headless
+    znc
     python314
     unison
     inputs.my-nvf.packages.x86_64-linux.default
+    harper
     wget
     tmux
     smartmontools

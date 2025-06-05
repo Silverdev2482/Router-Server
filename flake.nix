@@ -17,10 +17,10 @@
           inherit system;
           specialArgs = { inherit inputs; };
           modules = [
+            ./minecraft.nix
             ./hardware-configuration.nix
             ./configuration.nix
             ./router.nix
-            #           ./minecraft.nix
             inputs.nix-minecraft.nixosModules.minecraft-servers
             inputs.nixos-router.nixosModules.default
           ];

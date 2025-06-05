@@ -19,7 +19,6 @@ define LAN_INTERFACE = lan0
 define ROUTER4_ADDRESS = 10.48.0.1
 define ROUTER6_ADDRESS = fd99:2673:4614:940a::1
 define VETH4_ADDRESS = 10.48.192.2
-define MINECRAFT4_ADDRESS = 10.48.1.128
 
 define LAN4_SPACE = 10.48.0.0/17
 define LAN6_SPACE = fd99:2673:4614:940a::1/64
@@ -37,30 +36,36 @@ table inet global {
   chain prerouting {
     type nat hook prerouting priority -100; policy accept;
 
-    # Minecraft
-    tcp dport { 25565, 24454 } dnat ip to $MINECRAFT4_ADDRESS
-    udp dport { 25565, 24454 } dnat ip to $MINECRAFT4_ADDRESS
+    # Minecraft, now it runs on the router, left as an example
+    # tcp dport { 25565, 24454 } dnat ip to $MINECRAFT4_ADDRESS
+    # udp dport { 25565, 24454 } dnat ip to $MINECRAFT4_ADDRESS
   }
   chain inbound {
     type filter hook input priority 0; policy drop;
 
-    ct state vmap { established : accept, related : accept, invalid : drop }
     iifname wan0 jump inbound_wan
+    iifname lan0 accept
     iifname lo accept
+
 
     ip saddr $ALL4_SPACE accept
     ip6 saddr $LAN6_SPACE accept
 
+    udp dport { 25565, 24454, 19132 } accept
+    tcp dport 25565 accept
     udp dport { 443, 51820 } accept # wireguard
     tcp dport 22 accept # ssh
     udp dport 60000-61000 accept # mosh
+
+    ct state vmap { established : accept, related : accept, invalid : drop }
   }
    chain inbound_wan {
     # https://shouldiblockicmp.com/
     # that said, icmp has some dangerous packet types, so limit it to
     # some extent
-    ip protocol icmp icmp type { destination-unreachable, echo-request, time-exceeded, parameter-problem } accept
-    ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, echo-request, time-exceeded, parameter-problem, packet-too-big } accept
+    ip protocol icmp icmp type { destination-unreachable, echo-request, time-exceeded, parameter-problem, } accept
+    ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, echo-request, time-exceeded, parameter-problem, packet-too-big, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } accept
+    udp dport { 546, 547 } accept
   }
   chain outbound {
     type route hook output priority 0; policy accept;
@@ -69,21 +74,18 @@ table inet global {
   chain forward {
     type filter hook forward priority 100; policy drop;
 
-    ct state vmap { established : accept, related : accept, invalid : drop }
+    # Do not allow the isolated subnet outside network access
+    ip saddr $LAN4_ONLY_SPACE oifname $WAN_INTERFACE drop
 
-    ip daddr $MINECRAFT4_ADDRESS udp dport { 25565, 24454 } accept
-    ip daddr $MINECRAFT4_ADDRESS tcp dport { 25565, 24454 } accept
+    ct state vmap { established : accept, related : accept, invalid : drop }
 
     # allow lan networks access to each other
     ip saddr $ALL4_SPACE accept
-    # Do not allow the isolated subnet network access
-    ip saddr $LAN4_ONLY_SPACE oifname $WAN_INTERFACE drop
   }
  chain postrouting {
     type nat hook postrouting priority 200; policy accept;
 
     ip saddr $LAN4_SPACE oifname wan0 masquerade
-    ip6 saddr $LAN6_SPACE oifname wan0 masquerade
     ip saddr $WAN4_INCLUDED_SPACE oifname wan0 masquerade
   }
 }
