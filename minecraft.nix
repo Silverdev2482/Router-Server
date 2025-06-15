@@ -9,7 +9,7 @@
       let
         modpack = pkgs.fetchPackwizModpack {
           url = "https://raw.githubusercontent.com/Silverdev2482/New-mods/master/pack.toml";
-          packHash = "sha256-RMqyPq+Tb2XGDe4PonHkBbogb/fBjteEWd0XIq9lb4E=";
+          packHash = "sha256-UC/P7A5vspYL12MENhP43zx0etrZ8DoTdsyRzo4Y4GM=";
         };
         mcVersion = modpack.manifest.versions.minecraft;
         fabricVersion = modpack.manifest.versions.fabric;

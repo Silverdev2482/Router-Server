@@ -35,6 +35,20 @@
 
   time.timeZone = "US/Central";
 
+  security.polkit = {
+    enable = true;
+    extraConfig = ''
+      polkit.addRule(function(action, subject) {
+        if (action.id == "org.freedesktop.systemd1.manage-units" &&
+          action.lookup("unit") == "minecraft-server-survival.service" &&
+          subject.isInGroup == "minecraft") {
+            return polkit.Result.YES;
+          }
+        }
+      );
+    '';
+  };
+
   services = {
     samba = {
       enable = true;
@@ -174,7 +188,7 @@
     znc
     python314
     unison
-    inputs.my-nvf.packages.x86_64-linux.default
+#    inputs.my-nvf.packages.x86_64-linux.default
     harper
     wget
     tmux
@@ -184,7 +198,7 @@
     git-lfs
     git
     packwiz
-    neofetch
+    fastfetch
     btop
   ];
 
