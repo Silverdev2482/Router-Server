@@ -18,7 +18,7 @@
       {
         enable = true;
 	      path = [ pkgs.git pkgs.git-lfs ];
-        autoStart = true;
+        autoStart = false;
         jvmOpts = "-Xmx10240M -Xms512M";
         package = pkgs.fabricServers.${serverVersion}.override { loaderVersion = fabricVersion; };
         symlinks = {

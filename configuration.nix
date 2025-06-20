@@ -17,16 +17,21 @@
     };
   };
 
-  nixpkgs.config.packageOverrides = pkgs:
-    pkgs.lib.recursiveUpdate pkgs {
-      linuxKernel.kernels.linux = pkgs.linuxKernel.kernels.linux.override {
-        extraConfig = ''
-          CONFIG_BCACHEFS_ERASURE_CODING y                                                                
-        '';
+services.logrotate.checkConfig = false;
+  nixpkgs = {
+    config = {
+      packageOverrides = pkgs:
+        pkgs.lib.recursiveUpdate pkgs {
+          linuxKernel.kernels.linux = pkgs.linuxKernel.kernels.linux.override {
+            extraConfig = ''
+              CONFIG_BCACHEFS_ERASURE_CODING y
+            '';
+          };
+        };
+        allowUnfree = true;
       };
     };
 
-  nixpkgs.config.allowUnfree = true;
 
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
@@ -96,7 +101,10 @@
     postgresql = {
       enable = true;
       settings.timezone = "US/Central";
-      authentication = "host all all 127.0.0.1/32 scram-sha-256";
+      authentication = ''
+        host all all 127.0.0.0/8 scram-sha-256"
+        host all all 10.48.0.0/16 scram-sha-256"
+      '';
     };
   };
 
@@ -184,11 +192,12 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    irssi
     jdk21_headless
     znc
     python314
     unison
-#    inputs.my-nvf.packages.x86_64-linux.default
+    inputs.my-nvf.packages.x86_64-linux.default
     harper
     wget
     tmux
