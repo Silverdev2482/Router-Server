@@ -19,15 +19,15 @@
 #        systemdLink.linkConfig.MACAddress = "d0:50:4a:bb:97:1b";
         dhcpcd = {
           enable = true;
-#          extraConfig = ''
-#            noipv6rs
-#            waitip 6
-#            interface wan0
-#              ipv6rs
-#              iaid 1
-#              ia_na 1
-#              ia_pd 2 lan0/0/60
-#          '';
+          extraConfig = ''
+            noipv6rs
+            waitip 6
+            interface wan0
+              ipv6rs
+              iaid 1
+              ia_na 1
+              ia_pd 2 lan0/0/60
+          '';
         };
         ipv4.enableForwarding = true;
         ipv6.enableForwarding = true;
@@ -151,7 +151,6 @@
   networking = {
     wireguard.interfaces = {
       commercial-vpn = {
-        # Public key is: +k1Ly60puFUTM39Ds4efy9ZMoCynnLmu0wErsaJvpls=
         privateKey = builtins.readFile "/srv/secrets/commercial-vpn.key";
 
         interfaceNamespace = "vpn";
@@ -165,6 +164,7 @@
         }];
       };
       lan-vpn = {
+        # Public key is: +k1Ly60puFUTM39Ds4efy9ZMoCynnLmu0wErsaJvpls=
         privateKeyFile = "/etc/nixos/secrets/router-vpn.key";
         listenPort = 51820;
 
@@ -214,14 +214,21 @@
       };
       wan-direct-vpn = {
         privateKey = builtins.readFile "/srv/secrets/router-vpn.key";
-        listenPort = 443;
+        listenPort = 51821;
 
         ips = [ "10.48.128.1/24" ];
-        peers = [{
-          publicKey = "9ebQTGgXBOEVscX6oT/GBQ2MwsQdrtoev22Z1aXb5k8=";
-          persistentKeepalive = 25;
-          allowedIPs = [ "10.48.128.2/32" ];
-        }];
+        peers = [
+          {
+            publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.128.2/32" ];
+          }
+          {
+            publicKey = "Ul0RAdEH1/VuXjDkx8mJN64GbmFVG6znk60B6Uoy3RI=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.128.3/32" ];
+          }
+        ];
       };
     };
 

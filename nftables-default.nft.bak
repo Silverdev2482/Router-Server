@@ -53,7 +53,7 @@ table inet global {
     ip6 saddr $LAN6_SPACE accept
 
     udp dport 19132 accept
-    udp dport { 51820, 51821 } accept # wireguard
+    udp dport { 443, 51820 } accept # wireguard
     tcp dport 22 accept # ssh
     udp dport 60000-61000 accept # mosh
 
@@ -77,14 +77,14 @@ table inet global {
     # Do not allow the isolated subnet outside network access
     ip saddr $LAN4_ONLY_SPACE oifname $WAN_INTERFACE drop
 
+    tcp dport 25565 accept
+    udp dport { 25565, 24454 } accept
+
+    ct state vmap { established : accept, related : accept }
+
     # allow lan networks access to each other
     ip saddr $ALL4_SPACE accept
- 
-    ip daddr 10.48.0.128 tcp dport 25565 accept
-    ip daddr 10.48.0.128 udp dport { 24454, 25565 } accept
-
-    ct state vmap { established : accept, related : accept, invalid : drop }
- }
+  }
  chain postrouting {
     type nat hook postrouting priority 200; policy accept;
 
@@ -128,6 +128,5 @@ table netdev filter {
     ip6 nexthdr icmpv6 counter drop
     # only accept packets to local (i.e. our own) addresses from wan
     # in case of lan, we WANT non-local packets - we will be forwarding them!
-    fib daddr . iif type != local drop
   }
 }

@@ -16,7 +16,7 @@
         serverVersion = lib.replaceStrings [ "." ] [ "_" ] "fabric-${mcVersion}";
       in
       {
-        enable = true;
+        enable = false;
 	      path = [ pkgs.git pkgs.git-lfs ];
         autoStart = false;
         jvmOpts = "-Xmx10240M -Xms512M";

@@ -90,7 +90,7 @@ services.logrotate.checkConfig = false;
     smartd = { enable = true; };
     immich = {
       enable = true;
-      host = "10.48.224.5";
+      host = "10.48.0.1";
     };
     jellyfin.enable = true;
     pixiecore = {
@@ -100,10 +100,11 @@ services.logrotate.checkConfig = false;
     };
     postgresql = {
       enable = true;
+      enableTCPIP = true;
       settings.timezone = "US/Central";
       authentication = ''
-        host all all 127.0.0.0/8 scram-sha-256"
-        host all all 10.48.0.0/16 scram-sha-256"
+        host all all 127.0.0.0/8 scram-sha-256
+        host all all 10.48.0.0/16 scram-sha-256
       '';
     };
   };
@@ -137,7 +138,7 @@ services.logrotate.checkConfig = false;
   };
 
   users = {
-    mutableUsers = true;
+    mutableUsers = false;
     groups = {
       share = { };
       guest = { };
@@ -145,7 +146,7 @@ services.logrotate.checkConfig = false;
       holub = {};
     };
     users = {
-      silverdev2482 = {
+      Silverdev2482 = {
         isNormalUser = true;
         extraGroups = [ "wheel" "minecraft" "share" ];
       };
@@ -192,6 +193,7 @@ services.logrotate.checkConfig = false;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    rsync
     irssi
     jdk21_headless
     znc
@@ -206,6 +208,7 @@ services.logrotate.checkConfig = false;
     zip
     git-lfs
     git
+    gitui
     packwiz
     fastfetch
     btop
