@@ -22,7 +22,8 @@ define VETH4_ADDRESS = 10.48.192.2
 define MINECRAFT4_ADDRESS = 10.48.0.128
 
 define LAN4_SPACE = 10.48.0.0/17
-define LAN6_SPACE = fd99:2673:4614:940a::1/64
+define LAN6_ULA_SPACE = fd99:2673:4614:940a::1/64
+define LAN6_PD_SPACE = 2605:4a80:2500:20d0::1/60
 
 # This is all the subnets
 define ALL4_SPACE = 10.48.0.0/16
@@ -50,7 +51,7 @@ table inet global {
 
 
     ip saddr $ALL4_SPACE accept
-    ip6 saddr $LAN6_SPACE accept
+    ip6 saddr $LAN6_ULA_SPACE accept
 
     udp dport 19132 accept
     udp dport { 51820, 51821 } accept # wireguard
@@ -79,6 +80,8 @@ table inet global {
 
     # allow lan networks access to each other
     ip saddr $ALL4_SPACE accept
+    ip6 saddr $LAN6_ULA_SPACE accept
+    ip6 saddr $LAN6_PD_SPACE accept
  
     ip daddr 10.48.0.128 tcp dport 25565 accept
     ip daddr 10.48.0.128 udp dport { 24454, 25565 } accept
