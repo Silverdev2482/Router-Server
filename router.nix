@@ -14,7 +14,7 @@
   router = {
     interfaces = {
       wan0 = {
-        systemdLink.matchConfig.PermanentMACAddress = "d0:50:99:c3:06:d9";
+        systemdLink.matchConfig.PermanentMACAddress = "d0:50:99:c3:06:da";
         systemdLink.linkConfig.Name = "wan0";
 #        systemdLink.linkConfig.MACAddress = "d0:50:4a:bb:97:1b";
         dhcpcd = {
@@ -26,14 +26,15 @@
               ipv6rs
               iaid 1
               ia_na 1
-              ia_pd 2 lan0/0/60
+              ia_pd 2 lan0/0/64
+              ia_pd 2 wan-direct-vpn/1/64
           '';
         };
         ipv4.enableForwarding = true;
         ipv6.enableForwarding = true;
       };
       lan0 = {
-        systemdLink.matchConfig.PermanentMACAddress = "d0:50:99:c3:06:da";
+        systemdLink.matchConfig.PermanentMACAddress = "d0:50:99:c3:06:d9";
         systemdLink.linkConfig.Name = "lan0";
         dhcpcd.enable = false;
         ipv4 = {
@@ -70,28 +71,56 @@
         };
         ipv6 = {
           enableForwarding = true;
-          radvd = { enable = true; };
-          kea = {
+          corerad = {
             enable = true;
-            settings = {
-              #lease-database = {
-              #  type = "postgresql";
-              #  name = "kea_dhcp";
-              #  user = "kea";
-              #  password = builtins.readFile "/srv/secrets/kea.password";
-              #};
+            interfaceSettings = {
+              prefix = {
+                autonomous = true;
+                prefix = "2605:4a80:2500:20d0::/64";
+              };
             };
           };
+#          kea = {
+#            enable = false;
+#            settings = {
+#              subnet6 = [
+#                {
+#                  id = 2;
+#                  interface = "lan0";
+#                  option-data = [
+#                    {
+#                      code = 23;
+#                      csv-format = true;
+#                      data = "2606:4700:4700::1111, 2606:4700:4700::1001";
+#                      name = "dns-servers";
+#                      space = "dhcp6";
+#                    }
+#                  ];
+#                  pools = [
+#                    {
+
+#                      pool = "2605:4a80:2500:20d0::2-2605:4a80:2500:20d0::ff00";
+#                    }
+#                  ];However
+#                  subnet = "2605:4a80:2500:20d0::1/96";
+#                }
+#              ];
+#            };
+#          };
           addresses = [{
-            address = "fd99:2673:4614:940a::1";
-            prefixLength = 96;
-            keaSettings = {
-              pools = [{
-                pool = "fd99:2673:4614:940a::2-fd99:2673:4614:940a::ff00";
-              }];
-              subnet = "fd99:2673:4614:940a::/96";
-            };
+            address = "fd99:2673:4614::1";
+            prefixLength = 64;
+#            keaSettings = {
+#              pools = [{
+#                pool = "fd99:2673:4614:940a::2-fd99:2673:4614:940a::ff00";
+#              }];
+#              subnet = "fd99:2673:4614:940a::/96";
+#            };
             dns = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
+            gateways = [{
+              address = "fe80::";
+              prefixLength = 64;
+            }];
           }];
         };
       };

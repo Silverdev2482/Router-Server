@@ -12,12 +12,16 @@
         enable = true;
         device = "nodev";
         efiSupport = true;
+        extraConfig = "serial --speed=115200 --unit=1 --word=8 --parity=no --stop=1; terminal_input serial; terminal_output serial";
       };
       efi.canTouchEfiVariables = true;
     };
+    kernelModules = [ "lanplus" ];
+    kernelParams = [ "console=tty1" "console=ttyS1,115200n8" ];
   };
+  systemd.services."serial-getty@ttyS1".wantedBy = [ "multi-user.target" ];
 
-services.logrotate.checkConfig = false;
+  services.logrotate.checkConfig = false;
   nixpkgs = {
     config = {
       packageOverrides = pkgs:
@@ -82,11 +86,6 @@ services.logrotate.checkConfig = false;
       };
     };
     samba-wsdd.enable = true;
-    znc = {
-      enable = true;
-      mutable = true;
-      useLegacyConfig = false;
-    };
     smartd = { enable = true; };
     immich = {
       enable = true;
@@ -138,7 +137,7 @@ services.logrotate.checkConfig = false;
   };
 
   users = {
-    mutableUsers = false;
+    mutableUsers = true;
     groups = {
       share = { };
       guest = { };
