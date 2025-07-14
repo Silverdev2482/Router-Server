@@ -17,13 +17,14 @@ define LAN_INTERFACE = lan0
 
 # Various addresses of things, keep in mind there may be more things running on them than the name implies
 define ROUTER4_ADDRESS = 10.48.0.1
-define ROUTER6_ADDRESS = fd99:2673:4614:940a::1
+define ROUTER6_ULA_ADDRESS = fd99:2673:4614:940a::1
 define VETH4_ADDRESS = 10.48.192.2
 define MINECRAFT4_ADDRESS = 10.48.0.128
 
 define LAN4_SPACE = 10.48.0.0/17
 define LAN6_ULA_SPACE = fd99:2673:4614:940a::1/64
-define LAN6_PD_SPACE = 2605:4a80:2500:20d0::1/60
+
+define LAN6_PD_SPACE = { 2605:4a80:2500:20d0::/64 }
 
 # This is all the subnets
 define ALL4_SPACE = 10.48.0.0/16
@@ -41,6 +42,7 @@ table inet global {
     # Minecraft, now it runs on the router, left as an example
     udp dport { 25565, 24454 } dnat ip to $MINECRAFT4_ADDRESS
     tcp dport 25565 dnat ip to $MINECRAFT4_ADDRESS
+
   }
   chain inbound {
     type filter hook input priority 0; policy drop;
@@ -48,10 +50,11 @@ table inet global {
     iifname wan0 jump inbound_wan
     iifname lan0 accept
     iifname lo accept
-
+  
 
     ip saddr $ALL4_SPACE accept
     ip6 saddr $LAN6_ULA_SPACE accept
+    ip6 saddr $LAN6_PD_SPACE accept
 
     udp dport 19132 accept
     udp dport { 51820, 51821 } accept # wireguard
@@ -65,7 +68,7 @@ table inet global {
     # that said, icmp has some dangerous packet types, so limit it to
     # some extent
     ip protocol icmp icmp type { destination-unreachable, echo-request, time-exceeded, parameter-problem, } accept
-    ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, echo-request, time-exceeded, parameter-problem, packet-too-big, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } accept
+    ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, echo-request, time-exceeded, parameter-problem, packet-too-big, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect } accept
     udp dport { 546, 547 } accept
   }
   chain outbound {
@@ -74,6 +77,10 @@ table inet global {
   }
   chain forward {
     type filter hook forward priority 100; policy drop;
+
+
+    ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, echo-request, time-exceeded, parameter-problem, packet-too-big, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect } accept
+
 
     # Do not allow the isolated subnet outside network access
     ip saddr $LAN4_ONLY_SPACE oifname $WAN_INTERFACE drop
@@ -117,10 +124,7 @@ table netdev filter {
 
     # Spoofing protection - protect against others pretending to be the router
     ip saddr $ROUTER4_ADDRESS drop
-    ip6 saddr $ROUTER6_ADDRESS drop
-
-    # drop if coming from wrong interface
-    fib saddr . iif oif missing drop
+    ip6 saddr $ROUTER6_ULA_ADDRESS drop
   }
   chain ingress_wan {
     type filter hook ingress device wan0 priority -500;
@@ -129,8 +133,5 @@ table netdev filter {
     ip protocol icmp counter drop
     ip6 nexthdr icmpv6 limit rate 100/second accept
     ip6 nexthdr icmpv6 counter drop
-    # only accept packets to local (i.e. our own) addresses from wan
-    # in case of lan, we WANT non-local packets - we will be forwarding them!
-    fib daddr . iif type != local drop
   }
 }

@@ -15,7 +15,10 @@
       nixosConfigurations = {
         Router-Server = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs; };
+          specialArgs = {
+            inherit inputs;
+            addresses = import ./addresses.nix;
+          };
           modules = [
             ./minecraft.nix
             ./hardware-configuration.nix

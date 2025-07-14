@@ -16,7 +16,6 @@
       wan0 = {
         systemdLink.matchConfig.PermanentMACAddress = "d0:50:99:c3:06:da";
         systemdLink.linkConfig.Name = "wan0";
-#        systemdLink.linkConfig.MACAddress = "d0:50:4a:bb:97:1b";
         dhcpcd = {
           enable = true;
           extraConfig = ''
@@ -41,18 +40,6 @@
           enableForwarding = true;
           kea = {
             enable = true;
-            settings = {
-              # This is totally unessacary instead of a memfile as I thought it would let
-              # me do leases imperatively, however that is a seperate database and only
-              # available in the paid version of kea, but sunk cost fallacy.
-              # The postgres package broke now, and I don't care to fix it, so I just disabled it.
-              # lease-database = {
-              #  type = "postgresql";
-              #  name = "kea_dhcp";
-              #  user = "kea";
-              #  password = builtins.readFile "/srv/secrets/kea.password";
-              # };
-            };
           };
           addresses = [{
             address = "10.48.0.1";
@@ -74,48 +61,21 @@
           corerad = {
             enable = true;
             interfaceSettings = {
-              prefix = {
-                autonomous = true;
-                prefix = "2605:4a80:2500:20d0::/64";
-              };
+              prefix = [
+                {
+                  autonomous = true;
+                  prefix = lan6ULASpace;
+                }
+                {
+                  autonomous = true;
+                  prefix = lan6PDSPace;
+                }
+              ];
             };
           };
-#          kea = {
-#            enable = false;
-#            settings = {
-#              subnet6 = [
-#                {
-#                  id = 2;
-#                  interface = "lan0";
-#                  option-data = [
-#                    {
-#                      code = 23;
-#                      csv-format = true;
-#                      data = "2606:4700:4700::1111, 2606:4700:4700::1001";
-#                      name = "dns-servers";
-#                      space = "dhcp6";
-#                    }
-#                  ];
-#                  pools = [
-#                    {
-
-#                      pool = "2605:4a80:2500:20d0::2-2605:4a80:2500:20d0::ff00";
-#                    }
-#                  ];However
-#                  subnet = "2605:4a80:2500:20d0::1/96";
-#                }
-#              ];
-#            };
-#          };
           addresses = [{
-            address = "fd99:2673:4614::1";
+            address = lan6ULASpace;
             prefixLength = 64;
-#            keaSettings = {
-#              pools = [{
-#                pool = "fd99:2673:4614:940a::2-fd99:2673:4614:940a::ff00";
-#              }];
-#              subnet = "fd99:2673:4614:940a::/96";
-#            };
             dns = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
             gateways = [{
               address = "fe80::";
@@ -188,7 +148,7 @@
         peers = [{
           publicKey = "VHEKsP+aWtvlhaR1AN8mo1TNOSNJ8knV3kS1vQjN8Rk=";
           endpoint = "181.215.172.180:51820";
-          persistentKeepalive = 25;
+          persistentKeepalanVpn6ULASpacelive = 25;
           allowedIPs = [ "0.0.0.0/0" "::/0" ];
         }];
       };
@@ -197,6 +157,7 @@
         privateKeyFile = "/etc/nixos/secrets/router-vpn.key";
         listenPort = 51820;
 
+#        ips = [ "10.48.224.1/24" lanVpn6ULASpace ];
         ips = [ "10.48.224.1/24" ];
         peers = [
           {
@@ -245,6 +206,7 @@
         privateKey = builtins.readFile "/srv/secrets/router-vpn.key";
         listenPort = 51821;
 
+#        ips = [ "10.48.128.1/24" wanDirectVpn6ULASpace ]; # PD space intentionally excluded
         ips = [ "10.48.128.1/24" ];
         peers = [
           {
@@ -259,6 +221,7 @@
           }
         ];
       };
+      # Possibly another vpn to go through commercial vpn again, idk.
     };
 
     hostName = "Router-Server";
