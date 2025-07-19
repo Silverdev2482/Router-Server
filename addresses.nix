@@ -1,6 +1,7 @@
 rec {
   all6PDPrefix = "2605:4a80:2500:20d";
   lan6PDPrefix = all6PDPrefix + "0";
+  lan6PDSpace = all6PDPrefix + "0::/64";
 
   all6ULAPrefix = "fd99:2673:4614";
   all6ULASpace = all6ULAPrefix + "::/48";

@@ -5,101 +5,118 @@
 # When packets enter the system they first go to the prerouting hook. From there the will go to
 # either the forward hook or the input hook. After going through the input hook packets are recived
 # by the local system if there is something listening for them. Packets transmitted by this system
-# will also go though the output hook. In this configuration the output hook does not exist, in
-# nftables no hooks absolutely need to exist either. Usually the forward and input hook is where
-# you do filtering. The forward hook and output hook will then route to the post routing hook, where
+# will go to the output hook. In this configuration the output hook does not exist, in nftables it
+# is not nessacary for a specific hook to exist either. Usually the forward and input hook is where
+# you do filtering. The forward hook and output hook will then route to the postrouting hook, where
 # the packests will leave the system.
 
 flush ruleset
-
-define WAN_INTERFACE = wan0
-define LAN_INTERFACE = lan0
-
-# Various addresses of things, keep in mind there may be more things running on them than the name implies
-define ROUTER4_ADDRESS = 10.48.0.1
-define ROUTER6_ULA_ADDRESS = fd99:2673:4614:940a::1
-define VETH4_ADDRESS = 10.48.192.2
-define MINECRAFT4_ADDRESS = 10.48.0.128
-
-define LAN4_SPACE = 10.48.0.0/17
-define LAN6_ULA_SPACE = fd99:2673:4614:940a::1/64
-
-define LAN6_PD_SPACE = { 2605:4a80:2500:20d0::/64 }
-
-# This is all the subnets
-define ALL4_SPACE = 10.48.0.0/16
-
-# This subnet is for stuff that is on other interfaces than the lan interface and should only be allowed
-# access to lan, but not wan, the next one gives you wan access and lan access.
-define LAN4_ONLY_SPACE = 10.48.192.0/18
-define WAN4_INCLUDED_SPACE = 10.48.128.0/18
 
 
 table inet global {
   chain prerouting {
     type nat hook prerouting priority -100; policy accept;
 
-    # Minecraft, now it runs on the router, left as an example
-    udp dport { 25565, 24454 } dnat ip to $MINECRAFT4_ADDRESS
-    tcp dport 25565 dnat ip to $MINECRAFT4_ADDRESS
-
+    udp dport { 25565, 24454 } dnat ip to 10.48.0.128
+    tcp dport 25565 dnat ip to 10.48.0.128
   }
   chain inbound {
     type filter hook input priority 0; policy drop;
 
     iifname wan0 jump inbound_wan
-    iifname lan0 accept
-    iifname lo accept
+    iifname {
+      lo,
+      lan0,
+      veth0,
+      wan-direct-vpn,
+      lan-vpn
+    } accept
   
 
-    ip saddr $ALL4_SPACE accept
-    ip6 saddr $LAN6_ULA_SPACE accept
-    ip6 saddr $LAN6_PD_SPACE accept
-
-    udp dport 19132 accept
+    udp dport 19132 accept # minecraft bedrock to geyser
     udp dport { 51820, 51821 } accept # wireguard
     tcp dport 22 accept # ssh
     udp dport 60000-61000 accept # mosh
 
+    tcp dport 80 accept
+    udp dport 80 accept
+
     ct state vmap { established : accept, related : accept, invalid : drop }
   }
-   chain inbound_wan {
+  chain inbound_wan {
     # https://shouldiblockicmp.com/
     # that said, icmp has some dangerous packet types, so limit it to
     # some extent
-    ip protocol icmp icmp type { destination-unreachable, echo-request, time-exceeded, parameter-problem, } accept
-    ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, echo-request, time-exceeded, parameter-problem, packet-too-big, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect } accept
+    #
+    ip protocol icmp icmp type {
+      destination-unreachable,
+      echo-request,
+      time-exceeded,
+      parameter-problem,
+    } accept
+
+    ip6 nexthdr icmpv6 icmpv6 type {
+      destination-unreachable,
+      echo-request,
+      time-exceeded,
+      parameter-problem,
+      packet-too-big,
+
+      nd-router-advert,
+      nd-neighbor-solicit,
+      nd-neighbor-advert,
+      nd-redirect
+    } accept
+
     udp dport { 546, 547 } accept
   }
   chain outbound {
     type route hook output priority 0; policy accept;
-    tcp dport 445 ip dscp set 0x08
+    tcp dport 445 ip dscp set 0x08 # Set Samba to low priority
   }
   chain forward {
     type filter hook forward priority 100; policy drop;
 
+    # Do not allow the isolated interfaces outside network access
+    oifname wan0 iifname {
+      lan-vpn,
+      veth0
+    } drop
 
-    ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, echo-request, time-exceeded, parameter-problem, packet-too-big, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect } accept
+    iifname {
+      lo,
+      lan0,
+      veth0,
+      wan-direct-vpn,
+      lan-vpn
+    } accept
 
+    ip6 nexthdr icmpv6 icmpv6 type {
+      destination-unreachable,
+      echo-request,
+      time-exceeded,
+      parameter-problem,
+      packet-too-big
+    } accept
 
-    # Do not allow the isolated subnet outside network access
-    ip saddr $LAN4_ONLY_SPACE oifname $WAN_INTERFACE drop
-
-    # allow lan networks access to each other
-    ip saddr $ALL4_SPACE accept
-    ip6 saddr $LAN6_ULA_SPACE accept
-    ip6 saddr $LAN6_PD_SPACE accept
  
-    ip daddr 10.48.0.128 tcp dport 25565 accept
-    ip daddr 10.48.0.128 udp dport { 24454, 25565 } accept
+    ip6 saddr & ::f:ffff:ffff:ffff:ffff == ::1:0 jump minecraft
+    ip daddr 10.48.0.128 jump minecraft
 
     ct state vmap { established : accept, related : accept, invalid : drop }
- }
- chain postrouting {
+  }
+  chain minecraft {
+    tcp dport 25565 accept
+    udp dport 25565 accept
+    udp dport 24454 accept
+  }
+  chain postrouting {
     type nat hook postrouting priority 200; policy accept;
 
-    ip saddr $LAN4_SPACE oifname wan0 masquerade
-    ip saddr $WAN4_INCLUDED_SPACE oifname wan0 masquerade
+     meta nfproto ipv4 oifname wan0 iifname {
+      lan0,
+      wan-direct-vpn
+    } masquerade
   }
 }
 
@@ -121,10 +138,6 @@ table netdev filter {
     tcp flags & (fin|syn|rst|psh|ack|urg) == 0 drop
     # reject packets with irregular MSS
     tcp flags syn tcp option maxseg size 0-500 drop
-
-    # Spoofing protection - protect against others pretending to be the router
-    ip saddr $ROUTER4_ADDRESS drop
-    ip6 saddr $ROUTER6_ULA_ADDRESS drop
   }
   chain ingress_wan {
     type filter hook ingress device wan0 priority -500;
