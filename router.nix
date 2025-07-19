@@ -1,4 +1,5 @@
-{ config, pkgs, lib, inputs24router-lib, ... }:
+{ config, pkgs, lib, inputs24router-lib, addresses, ... }:
+
 {
 
   router.enable = true;
@@ -64,17 +65,17 @@
               prefix = [
                 {
                   autonomous = true;
-                  prefix = lan6ULASpace;
+                  prefix = addresses.lan6ULASpace;
                 }
                 {
                   autonomous = true;
-                  prefix = lan6PDSPace;
+                  prefix = addresses.lan6PDSpace;
                 }
               ];
             };
           };
           addresses = [{
-            address = lan6ULASpace;
+            address = addresses.lan6ULAPrefix + "::1";
             prefixLength = 64;
             dns = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
             gateways = [{
@@ -143,12 +144,12 @@
         privateKey = builtins.readFile "/srv/secrets/commercial-vpn.key";
 
         interfaceNamespace = "vpn";
-        ips = [ "10.5.0.2/32" ];
-        mtu = 1350;
+        ips = [ "10.150.158.52/32" "fd7d:76ee:e68f:a993:4489:8afd:d99f:4088/128" ];
         peers = [{
-          publicKey = "VHEKsP+aWtvlhaR1AN8mo1TNOSNJ8knV3kS1vQjN8Rk=";
-          endpoint = "181.215.172.180:51820";
-          persistentKeepalanVpn6ULASpacelive = 25;
+          publicKey = "PyLCXAQT8KkM4T+dUsOQfn+Ub3pGxfGlxkIApuig+hk=";
+          endpoint = "us3.ipv6.vpn.airdns.org:51820";
+          presharedKey = builtins.readFile "/srv/secrets/commercial-vpn.presharedkey";
+          persistentKeepalive = 25;
           allowedIPs = [ "0.0.0.0/0" "::/0" ];
         }];
       };
@@ -157,8 +158,8 @@
         privateKeyFile = "/etc/nixos/secrets/router-vpn.key";
         listenPort = 51820;
 
-#        ips = [ "10.48.224.1/24" lanVpn6ULASpace ];
-        ips = [ "10.48.224.1/24" ];
+        ips = [ "10.48.224.1/24" addresses.lanVpn6ULASpace ];
+#        ips = [ "10.48.224.1/24" ];
         peers = [
           {
             #
@@ -206,8 +207,8 @@
         privateKey = builtins.readFile "/srv/secrets/router-vpn.key";
         listenPort = 51821;
 
-#        ips = [ "10.48.128.1/24" wanDirectVpn6ULASpace ]; # PD space intentionally excluded
-        ips = [ "10.48.128.1/24" ];
+        ips = [ "10.48.128.1/24" addresses.wanDirectVpn6ULASpace ]; # PD space intentionally excluded
+#        ips = [ "10.48.128.1/24" ];
         peers = [
           {
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
@@ -219,6 +220,13 @@
             persistentKeepalive = 25;
             allowedIPs = [ "10.48.128.3/32" ];
           }
+          {
+            # My Pixel 7 Pro
+            publicKey = "M5PLr1lMH8b4s6qXgDejOo48iVSi9PjVaPQhFQGIIwM=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.128.4/32" "2605:4a80:2500:20d1::4/128" ];
+          }
+
         ];
       };
       # Possibly another vpn to go through commercial vpn again, idk.

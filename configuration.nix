@@ -93,7 +93,7 @@
     };
     jellyfin.enable = true;
     pixiecore = {
-      enable = true;
+      enable = false;
       dhcpNoBind = true;
       kernel = "https://boot.netboot.xyz";
     };
@@ -106,7 +106,19 @@
         host all all 10.48.0.0/16 scram-sha-256
       '';
     };
+    nginx = {
+      enable = true;
+      virtualHosts."kf0nlr.radio" = {
+        root = "/srv/www/";
+      };
+    };
   };
+
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "fidget1206@gmail.com";
+  };
+
 
   systemd.services = {
     qBittorrent-public = {
