@@ -56,6 +56,9 @@
             };
             dns = [ "1.1.1.1" "1.0.0.1" ];
           }];
+          routes = [
+            { extraArgs = "10.0.0.0/16 via 10.48.0.3"; }
+          ];
         };
         ipv6 = {
           enableForwarding = true;

@@ -63,14 +63,17 @@
       enable = true;
       settings = {
         global = {
+          "unix expensions" = "yes";
+          "allow insecure wide links" = "yes";
+          # This is safe if you would trust all users with access to this file
+          # server with ssh access to their own user account.
           "workgroup" = "WORKGROUP";
           "server string" = "smbnix";
           "netbios name" = "smbnix";
           "security" = "user";
-          # Won't let me change the capitalization to something else if I keep the same name without forcing case sensitivity
+          # Won't let me change the capitalization to something else if I keep
+          # the same name without forcing case sensitivity
           "case sensitive" = "yes"; 
-          # note: localhost is the ipv6 localhost ::1
-          "hosts allow" = "10.48.0.0/16 localhost";
           "guest account" = "nobody";
           "map to guest" = "bad user";
           # Apple is more retarded than even me
@@ -78,6 +81,8 @@
           "nt acl support" = "no";
         };
         "shares" = {
+          "wide links" = "yes";
+          "follow symlinks" = "yes";
           "path" = "/srv/shares/";
           "browseable" = "yes";
           "read only" = "no";
@@ -204,6 +209,7 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    yt-dlp
     rsync
     irssi
     jdk21_headless

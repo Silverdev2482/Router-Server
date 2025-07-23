@@ -61,7 +61,6 @@ table inet global {
       time-exceeded,
       parameter-problem,
       packet-too-big,
-
       nd-router-advert,
       nd-neighbor-solicit,
       nd-neighbor-advert,
