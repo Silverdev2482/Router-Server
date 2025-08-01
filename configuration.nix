@@ -19,7 +19,11 @@
     kernelModules = [ "lanplus" ];
     kernelParams = [ "console=tty1" "console=ttyS1,115200n8" ];
   };
-  systemd.services."serial-getty@ttyS1".wantedBy = [ "multi-user.target" ];
+  systemd.services."serial-getty@ttyS1" = {
+    enable = true;
+    wantedBy = [ "getty.target" ];
+    serviceConfig.Restart = "always";
+  };
 
   services.logrotate.checkConfig = false;
   nixpkgs = {
@@ -59,11 +63,53 @@
   };
 
   services = {
+    ddclient = let
+      ipv6sh = pkgs.writeScript "ipv6.sh" ''
+        ${pkgs.iproute2}/bin/ip -6 addr show scope global dev lan0 | ${pkgs.gnugrep}/bin/grep inet6 |\
+        ${pkgs.gawk}/bin/awk '{print $2}' | ${pkgs.gnugrep}/bin/grep -E ^\(2\|3\) | ${pkgs.coreutils}/bin/cut -d/ -f1
+      '';
+      ipv4sh = pkgs.writeScript "ipv4.sh" ''
+        ${pkgs.iproute2}/bin/ip -4 addr show scope global dev wan0 | ${pkgs.gnugrep}/bin/grep 'inet ' |\
+        ${pkgs.gawk}/bin/awk '{print $2}' | ${pkgs.coreutils}/bin/cut -d/ -f1
+      '';
+    in { 
+      enable = true;
+      verbose = true;
+      domains = [ "dyn.kf0nlr.radio" ];
+      usev6 = "cmdv6, cmdv6=${ipv6sh}";
+      usev4 = "cmdv4, cmdv4=${ipv4sh}";
+      protocol = "dyndns2";
+      server = "dyn.dns.he.net";
+      interval = "5min";
+      username = "dyn.kf0nlr.radio";
+      passwordFile = "/srv/secrets/hurricane-electric.pass";
+    }; 
+    bind = {
+      enable = true;
+      forwarders = [
+        "2606:4700:4700::1111" # Cloudflare main
+        "2606:4700:4700::1001" # Cloudflare backup
+        "2620:fe::fe" # Quad9 Main
+        "2620:fe::9" # Quad9 Backup
+        "1.1.1.1" # Cloudflare main
+        "1.0.0.1" # Cloudflare backup
+        "9.9.9.9" # Quad9 Main
+        "149.112.112.112" # Quad9 Backup
+      ];
+      cacheNetworks = [
+        "127.0.0.0/8"
+        "::1"
+        "10.48.0.0/16"
+        "fd99:2673:4614::/48"
+        "2605:4a80:2500:20d0::/60"
+      ];
+    };
     samba = {
       enable = true;
       settings = {
         global = {
-          "unix expensions" = "yes";
+          "mangled names" = "no";
+          "unix extensions" = "yes";
           "allow insecure wide links" = "yes";
           # This is safe if you would trust all users with access to this file
           # server with ssh access to their own user account.
@@ -73,7 +119,7 @@
           "security" = "user";
           # Won't let me change the capitalization to something else if I keep
           # the same name without forcing case sensitivity
-          "case sensitive" = "yes"; 
+          "case sensitive" = "yes";
           "guest account" = "nobody";
           "map to guest" = "bad user";
           # Apple is more retarded than even me
@@ -115,10 +161,15 @@
       enable = true;
       virtualHosts."kf0nlr.radio" = {
         root = "/srv/www/";
+        enableACME = true;
+        addSSL = true;
       };
     };
   };
 
+  security = {
+    sudo.wheelNeedsPassword = false;
+  };
   security.acme = {
     acceptTerms = true;
     defaults.email = "fidget1206@gmail.com";
@@ -193,6 +244,10 @@
         extraGroups = [ "share" ];
       };
 
+      orionastraeusantimatter = {
+        isNormalUser = true;
+        extraGroups = [ "share" ];
+      };
       TheRealmer = {
         isNormalUser = true;
         extraGroups = [ "minecraft" "share" ];
