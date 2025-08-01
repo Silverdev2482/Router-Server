@@ -38,8 +38,8 @@ table inet global {
     tcp dport 22 accept # ssh
     udp dport 60000-61000 accept # mosh
 
-    tcp dport 80 accept
-    udp dport 80 accept
+    tcp dport 443 accept
+    udp dport 443 accept
 
     ct state vmap { established : accept, related : accept, invalid : drop }
   }
@@ -71,7 +71,8 @@ table inet global {
   }
   chain outbound {
     type route hook output priority 0; policy accept;
-    tcp dport 445 ip dscp set 0x08 # Set Samba to low priority
+    ip6 daddr 2607:9000:a000:22:5bbc:39cc:ce7f:390 ip6 dscp set 0x08
+#    tcp dport 445 ip dscp set 0x08 # Set Samba to low priority
   }
   chain forward {
     type filter hook forward priority 100; policy drop;

@@ -162,24 +162,22 @@
         listenPort = 51820;
 
         ips = [ "10.48.224.1/24" addresses.lanVpn6ULASpace ];
-#        ips = [ "10.48.224.1/24" ];
         peers = [
-          {
-            #
-            publicKey = "9ebQTGgXBOEVscX6oT/GBQ2MwsQdrtoev22Z1aXb5k8=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.2/32" ];
-          }
-          {
-            publicKey = "QCNJ9TUaLSn94UsvlQsdQctzI7SnEdJApf6vSB4/BBg=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.3/32" ];
-          }
-          {
-            publicKey = "NH4dlhzjZbP1ABYmU//c0fq7prgXtDxbzGLTuWv9Tys=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.4/32" ];
-          }
+#          {
+#            publicKey = "9ebQTGgXBOEVscX6oT/GBQ2MwsQdrtoev22Z1aXb5k8=";
+#            persistentKeepalive = 25;
+#            allowedIPs = [ "10.48.224.2/32" ];
+#          }
+#          {
+#            publicKey = "QCNJ9TUaLSn94UsvlQsdQctzI7SnEdJApf6vSB4/BBg=";
+#            persistentKeepalive = 25;
+#            allowedIPs = [ "10.48.224.3/32" ];
+#          }
+#          {
+#            publicKey = "NH4dlhzjZbP1ABYmU//c0fq7prgXtDxbzGLTuWv9Tys=";
+#            persistentKeepalive = 25;
+#            allowedIPs = [ "10.48.224.4/32" ];
+#          }
           {
             # My T14 Gen 2
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
@@ -204,6 +202,30 @@
             persistentKeepalive = 25;
             allowedIPs = [ "10.48.224.8/32" ];
           }
+          {
+            # Louis' PC
+            publicKey = "hj4QoLhxembJTBG96+RWTjUZafeNzmz+g04IUr6fP10=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.9/32" ];
+          }
+          {
+            # orionastraeusantimatter
+            publicKey = "+L+zYb9TkNvsbC0/OPcyP919c6AmVtBN7mdYJw63dHA=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.10/32" ];
+          }
+          {
+            # orionastraeusantimatter
+            publicKey = "jdU2IYgl+Ys4wnxwc/iREh26eVJ/UgUbjFKpfd/LVTM=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.11/32" ];
+          }
+          {
+            # orionastraeusantimatter
+            publicKey = "iT66uEL4yy4RXoBSLcBDFYNTB17vLuXpAA4axr9vkBs=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.12/32" ];
+          }
         ];
       };
       wan-direct-vpn = {
@@ -213,6 +235,7 @@
         ips = [ "10.48.128.1/24" addresses.wanDirectVpn6ULASpace ]; # PD space intentionally excluded
 #        ips = [ "10.48.128.1/24" ];
         peers = [
+          # My T14 Gen 2
           {
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
             persistentKeepalive = 25;
@@ -289,4 +312,3 @@
     #};
   };
 }
-
