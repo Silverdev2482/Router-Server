@@ -62,28 +62,42 @@
     '';
   };
 
+  systemd = {
+    timers.ddns = {
+      timerConfig = {
+        OnCalendar = "*:0/5";
+        AccuracySec = "5sec";
+      };
+    };
+    services.ddns = let
+      ddns = pkgs.writeScript "ddns.sh" ''
+        #!${pkgs.bash}/bin/bash
+        echo "Finding IPs"
+        export ipv6=$(${pkgs.iproute2}/bin/ip -6 addr show scope global dev lan0 | ${pkgs.gnugrep}/bin/grep inet6 |\
+        ${pkgs.gawk}/bin/awk '{print $2}' | ${pkgs.gnugrep}/bin/grep -E ^\(2\|3\) | ${pkgs.coreutils}/bin/cut -d/ -f1)
+        export ipv4=$(${pkgs.iproute2}/bin/ip -4 addr show scope global dev wan0 | ${pkgs.gnugrep}/bin/grep 'inet ' |\
+        ${pkgs.gawk}/bin/awk '{print $2}' | ${pkgs.coreutils}/bin/cut -d/ -f1)
+      
+        echo "ipv6 is: ''${ipv6}"
+        echo "ipv4 is: ''${ipv4}"
+
+        echo "Updating DNS"
+
+        ${pkgs.curl}/bin/curl "https://dyn.dns.he.net/nic/update" -d "hostname=dyn.kf0nlr.radio" -d "password=$(</srv/secrets/hurricane-electric.pass)" -d "myip=''${ipv6}"
+        echo
+        ${pkgs.curl}/bin/curl "https://dyn.dns.he.net/nic/update" -d "hostname=dyn.kf0nlr.radio" -d "password=$(</srv/secrets/hurricane-electric.pass)" -d "myip=''${ipv4}"
+        echo
+
+        echo "Exiting"
+      '';
+    in {
+      serviceConfig = {
+        ExecStart = ddns;
+      };
+    };
+  };
+
   services = {
-    ddclient = let
-      ipv6sh = pkgs.writeScript "ipv6.sh" ''
-        ${pkgs.iproute2}/bin/ip -6 addr show scope global dev lan0 | ${pkgs.gnugrep}/bin/grep inet6 |\
-        ${pkgs.gawk}/bin/awk '{print $2}' | ${pkgs.gnugrep}/bin/grep -E ^\(2\|3\) | ${pkgs.coreutils}/bin/cut -d/ -f1
-      '';
-      ipv4sh = pkgs.writeScript "ipv4.sh" ''
-        ${pkgs.iproute2}/bin/ip -4 addr show scope global dev wan0 | ${pkgs.gnugrep}/bin/grep 'inet ' |\
-        ${pkgs.gawk}/bin/awk '{print $2}' | ${pkgs.coreutils}/bin/cut -d/ -f1
-      '';
-    in { 
-      enable = true;
-      verbose = true;
-      domains = [ "dyn.kf0nlr.radio" ];
-      usev6 = "cmdv6, cmdv6=${ipv6sh}";
-      usev4 = "cmdv4, cmdv4=${ipv4sh}";
-      protocol = "dyndns2";
-      server = "dyn.dns.he.net";
-      interval = "5min";
-      username = "dyn.kf0nlr.radio";
-      passwordFile = "/srv/secrets/hurricane-electric.pass";
-    }; 
     bind = {
       enable = true;
       forwarders = [

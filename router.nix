@@ -53,6 +53,11 @@
                 { hw-address = "D4:5D:64:7B:6B:60"; ip-address = "10.48.0.64"; }
                 { hw-address = "0C:9D:92:2C:4D:10"; ip-address = "10.48.0.65"; }
               ];
+              lease-database = {
+                name = "/var/lib/kea/dhcp4.leases";
+                persist = true;
+                type = "memfile";
+              };
             };
             dns = [ "1.1.1.1" "1.0.0.1" ];
           }];

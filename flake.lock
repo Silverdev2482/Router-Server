@@ -70,6 +70,18 @@
         "type": "github"
       }
     },
+    "immichUpdatePatch": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-3qCX9HUg+5B5cfqW/kVYXgeIcu0uJjhlNgcR1qw/TmE=",
+        "type": "file",
+        "url": "https://github.com/NixOS/nixpkgs/pull/430306.patch"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://github.com/NixOS/nixpkgs/pull/430306.patch"
+      }
+    },
     "mnw": {
       "locked": {
         "lastModified": 1748710831,
@@ -133,11 +145,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1753064794,
-        "narHash": "sha256-3EgmLyksi5Jpb54tNymeEBY8/h/G1Gf5HAQw4gm1d+8=",
+        "lastModified": 1754015684,
+        "narHash": "sha256-5Aet3ANxlrWFUqT65+W2esoo9eWp14EGsTdUQFbzqt8=",
         "owner": "Infinidoge",
         "repo": "nix-minecraft",
-        "rev": "95db5df2b845b360d0a9b79cbec9f95290a93de9",
+        "rev": "880dac6903961763770d507ce363ae0cc1da9444",
         "type": "github"
       },
       "original": {
@@ -245,11 +257,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1752950548,
-        "narHash": "sha256-NS6BLD0lxOrnCiEOcvQCDVPXafX1/ek1dfJHX1nUIzc=",
+        "lastModified": 1753939845,
+        "narHash": "sha256-K2ViRJfdVGE8tpJejs8Qpvvejks1+A4GQej/lBk5y7I=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "c87b95e25065c028d31a94f06a62927d18763fdf",
+        "rev": "94def634a20494ee057c76998843c015909d6311",
         "type": "github"
       },
       "original": {
@@ -284,6 +296,7 @@
     },
     "root": {
       "inputs": {
+        "immichUpdatePatch": "immichUpdatePatch",
         "my-nvf": "my-nvf",
         "nix-minecraft": "nix-minecraft",
         "nixos-router": "nixos-router",
