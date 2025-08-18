@@ -31,7 +31,9 @@ table inet global {
       wan-direct-vpn,
       lan-vpn
     } accept
-  
+
+    tcp dport 53 accept
+    udp dport 53 accept
 
     udp dport 19132 accept # minecraft bedrock to geyser
     udp dport { 51820, 51821 } accept # wireguard

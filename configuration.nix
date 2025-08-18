@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running `nixos-help`).
 
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, inputs, addresses, ... }:
 
 {
   boot = {
@@ -35,7 +35,7 @@
               CONFIG_BCACHEFS_ERASURE_CODING y
             '';
           };
-        };
+        };#
         allowUnfree = true;
       };
     };
@@ -64,6 +64,7 @@
 
   systemd = {
     timers.ddns = {
+      wantedBy = [ "timers.target" ];
       timerConfig = {
         OnCalendar = "*:0/5";
         AccuracySec = "5sec";
@@ -97,6 +98,8 @@
     };
   };
 
+  networking.nameservers = [ "10.48.0.1" ];
+
   services = {
     bind = {
       enable = true;
@@ -110,18 +113,42 @@
         "9.9.9.9" # Quad9 Main
         "149.112.112.112" # Quad9 Backup
       ];
-      cacheNetworks = [
-        "127.0.0.0/8"
-        "::1"
-        "10.48.0.0/16"
-        "fd99:2673:4614::/48"
-        "2605:4a80:2500:20d0::/60"
-      ];
+      cacheNetworks = addresses.internalAddresses;
+      zones = {
+        "kf0nlr.radio" = {
+          master = true;
+          file = pkgs.writeText "zone-kf0nlr.radio" ''
+            $ORIGIN kf0nlr.radio.
+            $TTL      300 ; 5 min
+            @         IN      SOA         dyn.kf0nlr.radio. fidget1206.gmail.com. (
+                              2025081701  ; Serial
+                              3h          ; Refresh after 3 hours
+                              1h          ; Retry after 1 hour
+                              1w          ; Expire after 1 week
+                              1h )        ; Negative caching TTL of 1 day
+
+            @         IN      NS      dyn.kf0nlr.radio.
+
+            @         IN      A       ${addresses.router4PublicAddress}
+            @         IN      AAAA    ${addresses.router6PDAddress}
+
+            dyn       IN      A       ${addresses.router4PublicAddress}
+            dyn       IN      AAAA    ${addresses.router6PDAddress}
+
+            astraeus  IN      A       ${addresses.router4PublicAddress}
+            astraeus  IN      AAAA    ${addresses.router6PDAddress}
+
+
+            qbittorrent-private.services IN AAAA ${addresses.router6ULAAddress}
+          '';
+        };
+      };
     };
     samba = {
       enable = true;
       settings = {
         global = {
+          "unix charset" = "UTF-8";
           "mangled names" = "no";
           "unix extensions" = "yes";
           "allow insecure wide links" = "yes";
@@ -154,7 +181,7 @@
     smartd = { enable = true; };
     immich = {
       enable = true;
-      host = "10.48.0.1";
+      host = "";
     };
     jellyfin.enable = true;
     pixiecore = {
@@ -168,15 +195,46 @@
       settings.timezone = "US/Central";
       authentication = ''
         host all all 127.0.0.0/8 scram-sha-256
-        host all all 10.48.0.0/16 scram-sha-256
+        host all all ::1/128 scram-sha-256
+        host all all ${addresses.all4Space} scram-sha-256
+        host all all ${addresses.all6PDSpace} scram-sha-256
+        host all all ${addresses.all6ULASpace} scram-sha-256
       '';
     };
     nginx = {
       enable = true;
-      virtualHosts."kf0nlr.radio" = {
-        root = "/srv/www/";
-        enableACME = true;
-        addSSL = true;
+      virtualHosts = {
+        "kf0nlr.radio" = {
+          root = "/srv/www/";
+          forceSSL = true;
+          useACMEHost = "kf0nlr.radio";
+        };
+        "astraeus.kf0nlr.radio" = {
+          root = "/home/orionastraeusantimatter/www/";
+          forceSSL = true;
+          useACMEHost = "kf0nlr.radio";
+        };
+        "qbittorrent-private.services.kf0nlr.radio" = {
+          forceSSL = true;
+          useACMEHost = "kf0nlr.radio";
+          locations."/" = {
+            proxyPass = "http://10.48.192.2:56080/";
+            extraConfig = ''
+              allow 127.0.0.0/8; 
+              allow ::1/128;
+              allow ${addresses.all4Space};
+              allow ${addresses.all6PDSpace};
+              allow ${addresses.all6ULASpace};
+              deny all; # Deny all other IPs
+              
+              # headers recognized by qBittorrent
+              proxy_set_header   Host               $proxy_host;
+              proxy_set_header   X-Forwarded-For    $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Host   $http_host;
+              proxy_set_header   X-Forwarded-Proto  $scheme;
+            '';
+          };
+        };
       };
     };
   };
@@ -186,7 +244,18 @@
   };
   security.acme = {
     acceptTerms = true;
-    defaults.email = "fidget1206@gmail.com";
+    certs."kf0nlr.radio" = {
+      group = "nginx";
+      email = "fidget1206@gmail.com";
+      dnsResolver = "1.1.1.1";
+      dnsProvider = "hurricane";
+      dnsPropagationCheck = false;
+      environmentFile = "/srv/secrets/certs";
+      extraDomainNames = [
+        "*.kf0nlr.radio"
+        "*.services.kf0nlr.radio"
+      ]; 
+    };
   };
 
 
@@ -214,6 +283,7 @@
         Type = "simple";
         User = "qbittorrent";
         ExecStart = "${pkgs.qbittorrent-nox}/bin/qbittorrent-nox --profile=/var/lib/qBittorrent-private --webui-port=56080";
+        NetworkNamespacePath = "/run/netns/vpn";
       };
     };
   };

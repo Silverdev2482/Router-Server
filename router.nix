@@ -41,6 +41,13 @@
           enableForwarding = true;
           kea = {
             enable = true;
+            settings = {
+              lease-database = {
+                name = "/var/lib/kea/dhcp4.leases";
+                persist = true;
+                type = "memfile";
+              };
+            };
           };
           addresses = [{
             address = "10.48.0.1";
@@ -53,11 +60,6 @@
                 { hw-address = "D4:5D:64:7B:6B:60"; ip-address = "10.48.0.64"; }
                 { hw-address = "0C:9D:92:2C:4D:10"; ip-address = "10.48.0.65"; }
               ];
-              lease-database = {
-                name = "/var/lib/kea/dhcp4.leases";
-                persist = true;
-                type = "memfile";
-              };
             };
             dns = [ "1.1.1.1" "1.0.0.1" ];
           }];
@@ -168,21 +170,22 @@
 
         ips = [ "10.48.224.1/24" addresses.lanVpn6ULASpace ];
         peers = [
-#          {
+#          { # Unknown
 #            publicKey = "9ebQTGgXBOEVscX6oT/GBQ2MwsQdrtoev22Z1aXb5k8=";
 #            persistentKeepalive = 25;
 #            allowedIPs = [ "10.48.224.2/32" ];
 #          }
-#          {
+#          { # Unknown
 #            publicKey = "QCNJ9TUaLSn94UsvlQsdQctzI7SnEdJApf6vSB4/BBg=";
 #            persistentKeepalive = 25;
 #            allowedIPs = [ "10.48.224.3/32" ];
 #          }
-#          {
-#            publicKey = "NH4dlhzjZbP1ABYmU//c0fq7prgXtDxbzGLTuWv9Tys=";
-#            persistentKeepalive = 25;
-#            allowedIPs = [ "10.48.224.4/32" ];
-#          }
+          {
+            # Cole's PC
+            publicKey = "NH4dlhzjZbP1ABYmU//c0fq7prgXtDxbzGLTuWv9Tys=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.4/32" ];
+          }
           {
             # My T14 Gen 2
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
