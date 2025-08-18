@@ -210,7 +210,7 @@
           useACMEHost = "kf0nlr.radio";
         };
         "astraeus.kf0nlr.radio" = {
-          root = "/home/orionastraeusantimatter/www/";
+          root = "/home/Astraeus/www/";
           forceSSL = true;
           useACMEHost = "kf0nlr.radio";
         };
@@ -328,7 +328,7 @@
         extraGroups = [ "share" ];
       };
 
-      orionastraeusantimatter = {
+      Astraeus = {
         isNormalUser = true;
         extraGroups = [ "share" ];
       };
@@ -337,7 +337,7 @@
         extraGroups = [ "minecraft" "share" ];
       };
 
-      julie = {
+      Julie = {
         isNormalUser = true;
         extraGroups = [ "share" "holub" ];
       };
