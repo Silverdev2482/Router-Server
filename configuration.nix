@@ -25,7 +25,6 @@
     serviceConfig.Restart = "always";
   };
 
-  services.logrotate.checkConfig = false;
   nixpkgs = {
     config = {
       packageOverrides = pkgs:
@@ -74,7 +73,7 @@
       ddns = pkgs.writeScript "ddns.sh" ''
         #!${pkgs.bash}/bin/bash
         echo "Finding IPs"
-        export ipv6=$(${pkgs.iproute2}/bin/ip -6 addr show scope global dev lan0 | ${pkgs.gnugrep}/bin/grep inet6 |\
+        export ipv6=$(${pkgs.iproute2}/bin/ip -6 addr show scope global dev br0 | ${pkgs.gnugrep}/bin/grep inet6 |\
         ${pkgs.gawk}/bin/awk '{print $2}' | ${pkgs.gnugrep}/bin/grep -E ^\(2\|3\) | ${pkgs.coreutils}/bin/cut -d/ -f1)
         export ipv4=$(${pkgs.iproute2}/bin/ip -4 addr show scope global dev wan0 | ${pkgs.gnugrep}/bin/grep 'inet ' |\
         ${pkgs.gawk}/bin/awk '{print $2}' | ${pkgs.coreutils}/bin/cut -d/ -f1)
@@ -98,52 +97,61 @@
     };
   };
 
-  networking.nameservers = [ "10.48.0.1" ];
-
   services = {
-    bind = {
+    logrotate.checkConfig = false;
+    mosquitto = {
       enable = true;
-      forwarders = [
-        "2606:4700:4700::1111" # Cloudflare main
-        "2606:4700:4700::1001" # Cloudflare backup
-        "2620:fe::fe" # Quad9 Main
-        "2620:fe::9" # Quad9 Backup
-        "1.1.1.1" # Cloudflare main
-        "1.0.0.1" # Cloudflare backup
-        "9.9.9.9" # Quad9 Main
-        "149.112.112.112" # Quad9 Backup
+      listeners = [
+        {
+          acl = [ "pattern readwrite #" ];
+          omitPasswordAuth = true;
+          settings.allow_anonymous = true;
+        }
       ];
-      cacheNetworks = addresses.internalAddresses;
-      zones = {
-        "kf0nlr.radio" = {
-          master = true;
-          file = pkgs.writeText "zone-kf0nlr.radio" ''
-            $ORIGIN kf0nlr.radio.
-            $TTL      300 ; 5 min
-            @         IN      SOA         dyn.kf0nlr.radio. fidget1206.gmail.com. (
-                              2025081701  ; Serial
-                              3h          ; Refresh after 3 hours
-                              1h          ; Retry after 1 hour
-                              1w          ; Expire after 1 week
-                              1h )        ; Negative caching TTL of 1 day
+    };
 
-            @         IN      NS      dyn.kf0nlr.radio.
-
-            @         IN      A       ${addresses.router4PublicAddress}
-            @         IN      AAAA    ${addresses.router6PDAddress}
-
-            dyn       IN      A       ${addresses.router4PublicAddress}
-            dyn       IN      AAAA    ${addresses.router6PDAddress}
-
-            astraeus  IN      A       ${addresses.router4PublicAddress}
-            astraeus  IN      AAAA    ${addresses.router6PDAddress}
-
-
-            qbittorrent-private.services IN AAAA ${addresses.router6ULAAddress}
-          '';
+    home-assistant = {
+      enable = true;
+      extraComponents = [
+        # Components required to complete the onboarding
+        "analytics"
+        "google_translate"
+        "met"
+        "mqtt"
+        "tasmota"
+        "esphome"
+        "radio_browser"
+        "shopping_list"
+        # Recommended for fast zlib compression
+        # https://www.home-assistant.io/integrations/isal
+        "isal"
+      ];
+      config = {
+        # Includes dependencies for a basic setup
+        # https://www.home-assistant.io/integrations/default_config/
+        default_config = {};
+        http = {
+          server_host = "::1";
+          trusted_proxies = [ "::1" ];
+          use_x_forwarded_for = true;
         };
+        "automation ui" = "!include automations.yaml";
+        "scene ui" = "!include scenes.yaml";
+        "script ui" = "!include scripts.yaml";
       };
     };
+    nfs = {
+      settings.nfs.nfsd.rdma = true;
+      server = {
+#        extraNfsdConfig = "rdma = yes";
+        enable = true;
+        exports = "
+          /srv/shares ${addresses.inf4Space}(rw,insecure,async,no_root_squash,acl)
+          /srv/shares ${addresses.inf6ULASpace}(rw,insecure,async,no_root_squash,acl)
+        ";
+      };
+    };
+    tftpd.enable = true;
     samba = {
       enable = true;
       settings = {
@@ -235,6 +243,43 @@
             '';
           };
         };
+        "qbittorrent-public.services.kf0nlr.radio" = {
+          forceSSL = true;
+          useACMEHost = "kf0nlr.radio";
+          locations."/" = {
+            proxyPass = "http://10.48.192.2:8080/";
+            extraConfig = ''
+              allow 127.0.0.0/8; 
+              allow ::1/128;
+              allow ${addresses.all4Space};
+              allow ${addresses.all6PDSpace};
+              allow ${addresses.all6ULASpace};
+              deny all; # Deny all other IPs
+              
+              # headers recognized by qBittorrent
+              proxy_set_header   Host               $proxy_host;
+              proxy_set_header   X-Forwarded-For    $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Host   $http_host;
+              proxy_set_header   X-Forwarded-Proto  $scheme;
+            '';
+          };
+        };
+        "home-assistant.services.kf0nlr.radio" = {
+          forceSSL = true;
+          useACMEHost = "kf0nlr.radio";
+          locations."/" = {
+            proxyPass = "http://[::1]:8123/";
+            proxyWebsockets = true;
+            extraConfig = ''
+              allow 127.0.0.0/8; 
+              allow ::1/128;
+              allow ${addresses.all4Space};
+              allow ${addresses.all6PDSpace};
+              allow ${addresses.all6ULASpace};
+              deny all; # Deny all other IPs
+            '';
+          };
+        };
       };
     };
   };
@@ -291,7 +336,9 @@
   users = {
     mutableUsers = true;
     groups = {
-      share = { };
+      share = {
+        gid = 994;
+      };
       guest = { };
       qbittorrent = {};
       holub = {};
@@ -299,9 +346,13 @@
     users = {
       Silverdev2482 = {
         isNormalUser = true;
-        extraGroups = [ "wheel" "minecraft" "share" ];
+        extraGroups = [ "rdma" "wheel" "minecraft" "share" "nginx" ];
       };
       share = {
+        isSystemUser = true;
+        group = "share";
+      };
+      borg = {
         isSystemUser = true;
         group = "share";
       };
@@ -348,6 +399,9 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    qperf
+    pciutils
+    rdma-core
     yt-dlp
     rsync
     irssi
@@ -362,6 +416,7 @@
     smartmontools
     kea
     zip
+    unzip
     git-lfs
     git
     gitui

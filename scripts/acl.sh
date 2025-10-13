@@ -99,6 +99,8 @@ case "$1" in
     export -f set_public_writable_recursive
     find /srv/shares/ -mindepth 1 -maxdepth 1 ! -path /srv/shares/Users ! -path /srv/shares/Groups -execdir bash -c 'reset_acls_recursive "$0"; set_public_writable_recursive "$0"' {} \;
 
+    rd_setfacl u:borg:rwx /srv/shares
+
     reset_acls_flat $root_directory/Users
     reset_acls_flat $root_directory/Groups
     set_public_read_only_flat $root_directory/Users

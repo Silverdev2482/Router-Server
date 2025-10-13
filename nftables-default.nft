@@ -17,8 +17,8 @@ table inet global {
   chain prerouting {
     type nat hook prerouting priority -100; policy accept;
 
-    udp dport { 25565, 24454 } dnat ip to 10.48.0.128
-    tcp dport 25565 dnat ip to 10.48.0.128
+#    udp dport { 25565, 24454 } dnat ip to 10.48.0.128
+#    tcp dport 25565 dnat ip to 10.48.0.128
   }
   chain inbound {
     type filter hook input priority 0; policy drop;
@@ -26,7 +26,8 @@ table inet global {
     iifname wan0 jump inbound_wan
     iifname {
       lo,
-      lan0,
+      br0,
+      ibs1,
       veth0,
       wan-direct-vpn,
       lan-vpn
@@ -87,7 +88,8 @@ table inet global {
 
     iifname {
       lo,
-      lan0,
+      br0,
+      ibs1,
       veth0,
       wan-direct-vpn,
       lan-vpn
@@ -116,7 +118,8 @@ table inet global {
     type nat hook postrouting priority 200; policy accept;
 
      meta nfproto ipv4 oifname wan0 iifname {
-      lan0,
+      br0,
+      ibs1,
       wan-direct-vpn
     } masquerade
   }
@@ -127,7 +130,7 @@ table inet global {
 # These run before any other chains
 table netdev filter {
   chain ingress {
-    type filter hook ingress devices = { wan0, lan0 } priority -500;
+    type filter hook ingress devices = { wan0, br0 } priority -500;
 
     # drop fin and syn at the same time
     tcp flags & (fin|syn) == (fin|syn) drop

@@ -12,6 +12,16 @@
     kernelModules = [ "sch_cake" ];
   };
 
+  hardware.infiniband = {
+    enable = true;
+    guids = [ "0xf452140300921801" ];
+  };
+
+#  systemd.services."opensm@0xf452140300921801".serviceConfig = {
+#    ExecStartPre = '' ${pkgs.bash}/bin/bash -c 'while [ "$(cat /sys/class/infiniband/mlx4_0/ports/1/state)" != "1: DOWN"]; do sleep .1; done' '';
+#  };
+
+
   router = {
     interfaces = {
       wan0 = {
@@ -26,8 +36,9 @@
               ipv6rs
               iaid 1
               ia_na 1
-              ia_pd 2 lan0/0/64
-              ia_pd 2 wan-direct-vpn/1/64
+              ia_pd 2 br0/0/64
+              ia_pd 2 ibs1/1/64
+              ia_pd 2 wan-direct-vpn/3/64
           '';
         };
         ipv4.enableForwarding = true;
@@ -36,6 +47,52 @@
       lan0 = {
         systemdLink.matchConfig.PermanentMACAddress = "d0:50:99:c3:06:d9";
         systemdLink.linkConfig.Name = "lan0";
+        bridge = "br0";
+      };
+      lan1 = {
+        systemdLink.matchConfig.PermanentMACAddress = "f4:52:14:92:18:02";
+        systemdLink.linkConfig.Name = "lan1";
+        bridge = "br0";
+      };
+      ibs1 = {
+        systemdLink.matchConfig.MACAddress = "80:00:02:18:fe:80:00:00:00:00:00:00:f4:52:14:03:00:92:18:01";
+        systemdLink.linkConfig.Name = "ibs1";
+        dhcpcd.enable = false;
+        ipv4 = {
+          addresses = [{
+            address = "10.48.64.1";
+            prefixLength = 18;
+          }];
+        };
+        ipv6 = {
+        # Doesn't work, nor does kea.
+          corerad = {
+#            enable = true;
+            interfaceSettings = {
+              prefix = [
+                {
+                  autonomous = true;
+                  prefix = addresses.inf6ULASpace;
+                }
+                {
+                  autonomous = true;
+                  prefix = addresses.inf6PDSpace;
+                }
+              ];
+            };
+          };
+          addresses = [{
+            address = addresses.inf6ULAPrefix + "::1";
+            prefixLength = 64;
+            dns = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
+            gateways = [{
+              address = "fe80::";
+              prefixLength = 64;
+            }];
+          }];
+        };
+      };
+      br0 = {
         dhcpcd.enable = false;
         ipv4 = {
           enableForwarding = true;
@@ -47,11 +104,71 @@
                 persist = true;
                 type = "memfile";
               };
+              client-classes = [
+                {
+                  name = "iPXE";
+                  test = "option[175].exists";
+                  option-data = [
+                    {
+                      name = "tftp-server-name";
+                      data = "10.48.0.1";
+                    }
+                    {
+                      name = "boot-file-name";
+                      data = "http://boot.netboot.xyz";
+                    }
+                  ];
+                }
+#                {
+#                  name = "HTTPClient";
+#                  test = "substring(option[vendor-class-identifier].hex,0,10) == 'HTTPClient";
+#                  boot-file-name = "https://kf0nlr.radio/ipxe.efi";
+#                  option-data = [
+#                    {
+#                      name = "vendor-class-identifier";
+#                      data = "HTTPClient";
+#                      always-send = true;
+#                    }
+#                  ];
+#                }
+                {
+                  name = "UEFI clients";
+                  test = "option[93].hex == 0x0007 and not option[175].exists";
+                  option-data = [
+                    {
+#                      code = 66;
+                      name = "tftp-server-name";
+                      data = "10.48.0.1";
+                    }
+                    {
+#                      code = 67;
+                      name = "boot-file-name";
+                      data = "ipxe.efi";
+                    }
+                  ];
+                }
+                {
+                  name = "BIOS clients";
+                  test = "option[93].hex == 0x0000 and not option[175].exists";
+                  option-data = [
+                    {
+                      code = 66;
+                      name = "tftp-server-name";
+                      data = "10.48.0.1";
+                    }
+                    {
+                      code = 67;
+                      name = "boot-file-name";
+                      data = "undionly.kpxe";
+                    }
+                  ];
+                }
+              ];
             };
           };
           addresses = [{
             address = "10.48.0.1";
-            prefixLength = 17;
+            prefixLength = 18;
             keaSettings = {
               pools = [{ pool = "10.48.1.2 - 10.48.1.254"; }];
               reservations = [
@@ -68,7 +185,6 @@
           ];
         };
         ipv6 = {
-          enableForwarding = true;
           corerad = {
             enable = true;
             interfaceSettings = {
@@ -102,9 +218,12 @@
             address = "10.48.192.1";
             prefixLength = 24;
           }];
-          routes = [
-#            { extraArgs = "10.48.192.2/24 via 10.48.192.2"; }
-          ];
+        };
+        ipv6 = {
+          addresses = [{
+            address = "${addresses.netns6ULAPrefix}::1";
+            prefixLength = 64;
+          }];
         };
         networkNamespace = "default";
       };
@@ -115,9 +234,17 @@
             prefixLength = 24;
           }];
           routes = [
-            { extraArgs = "10.48.0.0/17 via 10.48.192.1"; }
-            { extraArgs = "10.48.128.0/18 via 10.48.192.1"; }
-            { extraArgs = "10.48.224.0/19 via 10.48.192.1"; }
+            { extraArgs = "10.48.0.0/16 via 10.48.192.1"; }
+          ];
+        };
+        ipv6 = {
+          addresses = [{
+            address = "${addresses.netns6ULAPrefix}::2";
+            prefixLength = 64;
+          }];
+          routes = [
+            { extraArgs = "${addresses.all6ULASpace} via ${addresses.netns6ULAPrefix}::1"; }
+            { extraArgs = "${addresses.all6PDSpace} via ${addresses.netns6ULAPrefix}::1"; }
           ];
         };
         networkNamespace = "vpn";
@@ -132,13 +259,13 @@
           tc qdisc add dev wan0 root cake bandwidth 250mbit internet docsis nftables-default
 
           # Allows me to do traffic shaping on ingress
-          ip link add ifb0 type ifb
-          ip link set ifb0 up
+          ip link add wan0-ifb type ifb
+          ip link set wan0-ifb up
           tc qdisc add dev eth0 handle ffff: ingress
-          sudo tc filter add dev wan0 parent ffff: protocol all u32 match u32 0 0 action mirred egress redirect dev ifb0
+          sudo tc filter add dev wan0 parent ffff: protocol all u32 match u32 0 0 action mirred egress redirect dev wan0-ifb
 
           # Ingress traffic shaping
-          tc qdisc add dev ifb0 root cake bandwidth 250mbit internet docsis nat 
+          tc qdisc add dev wan0-ifb root cake bandwidth 250mbit internet docsis nat 
         '';
       };
       vpn = {
@@ -157,7 +284,8 @@
         ips = [ "10.150.158.52/32" "fd7d:76ee:e68f:a993:4489:8afd:d99f:4088/128" ];
         peers = [{
           publicKey = "PyLCXAQT8KkM4T+dUsOQfn+Ub3pGxfGlxkIApuig+hk=";
-          endpoint = "us3.ipv6.vpn.airdns.org:51820";
+          # us3.ipv6.vpn.airdns.org   dns doesn't resolve early, easier than specifing unit order.
+          endpoint = "[2602:fc48:7:0:26b1:de4a:93e0:719c]:51820";
           presharedKey = builtins.readFile "/srv/secrets/commercial-vpn.presharedkey";
           persistentKeepalive = 25;
           allowedIPs = [ "0.0.0.0/0" "::/0" ];
@@ -190,7 +318,7 @@
             # My T14 Gen 2
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.5/32" ];
+            allowedIPs = [ "10.48.224.5/32" (addresses.lanVpn6ULAPrefix + "::5") ];
           }
           {
             # Louis' T480
@@ -234,6 +362,12 @@
             persistentKeepalive = 25;
             allowedIPs = [ "10.48.224.12/32" ];
           }
+          {
+            # Simonette-Server
+            publicKey = "dgRQM3/eFf125E5rSt8OHMZ9IJGSO7RFQudHpPF8c2I=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.13/32" (addresses.lanVpn6ULAPrefix + "::13") ];
+          }
         ];
       };
       wan-direct-vpn = {
@@ -258,7 +392,7 @@
             # My Pixel 7 Pro
             publicKey = "M5PLr1lMH8b4s6qXgDejOo48iVSi9PjVaPQhFQGIIwM=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.128.4/32" "2605:4a80:2500:20d1::4/128" ];
+            allowedIPs = [ "10.48.128.4/32" "2605:4a80:2500:20d3::4/128" ];
           }
 
         ];
@@ -275,7 +409,7 @@
     avahi = {
       enable = true;
       hostName = "Router-Server";
-      allowInterfaces = [ "lan0" "veth0" ];
+      allowInterfaces = [ "br0" "veth0" ];
       publish = {
         enable = true;
         addresses = true;

@@ -18,7 +18,10 @@
       nixpkgs-patched = (import nixpkgs { inherit system; }).applyPatches {
         name = "nixpkgs-patched";
         src = nixpkgs;
-        patches = [ inputs.immichUpdatePatch ];
+        patches = [
+        #  No longer nessacary, left as an example.
+        #  inputs.immichUpdatePatch
+        ];
       };
       patchedNixOS = import (nixpkgs-patched + /nixos/lib/eval-config.nix);
     in {
@@ -35,6 +38,7 @@
             ./hardware-configuration.nix
             ./configuration.nix
             ./router.nix
+            ./dns.nix
             inputs.nix-minecraft.nixosModules.minecraft-servers
             inputs.nixos-router.nixosModules.default
           ];
