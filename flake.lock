@@ -70,18 +70,6 @@
         "type": "github"
       }
     },
-    "immichUpdatePatch": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-3qCX9HUg+5B5cfqW/kVYXgeIcu0uJjhlNgcR1qw/TmE=",
-        "type": "file",
-        "url": "https://github.com/NixOS/nixpkgs/pull/430306.patch"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://github.com/NixOS/nixpkgs/pull/430306.patch"
-      }
-    },
     "mnw": {
       "locked": {
         "lastModified": 1748710831,
@@ -294,13 +282,25 @@
         "type": "github"
       }
     },
+    "openThreadBoarderRouterInitPatch": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-6k65K8xBruX7TVqZq+42jBXdwllKijWWha+S0X/6NKo=",
+        "type": "file",
+        "url": "https://github.com/NixOS/nixpkgs/pull/417435.patch"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://github.com/NixOS/nixpkgs/pull/417435.patch"
+      }
+    },
     "root": {
       "inputs": {
-        "immichUpdatePatch": "immichUpdatePatch",
         "my-nvf": "my-nvf",
         "nix-minecraft": "nix-minecraft",
         "nixos-router": "nixos-router",
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_5",
+        "openThreadBoarderRouterInitPatch": "openThreadBoarderRouterInitPatch"
       }
     },
     "systems": {

@@ -6,8 +6,8 @@
     nix-minecraft.url = "github:Infinidoge/nix-minecraft";
     nixos-router.url = "github:chayleaf/nixos-router";
     my-nvf.url = "github:silverdev2482/nvf";
-    immichUpdatePatch = {
-      url = "https://github.com/NixOS/nixpkgs/pull/430306.patch";
+    openThreadBoarderRouterInitPatch = {
+      url = "https://github.com/NixOS/nixpkgs/pull/332296.patch";
       flake = false;
     };
   };
@@ -19,8 +19,7 @@
         name = "nixpkgs-patched";
         src = nixpkgs;
         patches = [
-        #  No longer nessacary, left as an example.
-        #  inputs.immichUpdatePatch
+          inputs.openThreadBoarderRouterInitPatch
         ];
       };
       patchedNixOS = import (nixpkgs-patched + /nixos/lib/eval-config.nix);

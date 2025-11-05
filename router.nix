@@ -6,8 +6,8 @@
 
   boot = {
     kernel.sysctl = {
-      "net.ipv4.conf.all.forwarding" = true;
-      "net.ipv6.conf.all.forwarding" = true;
+      "net.ipv4.conf.all.forwarding" = lib.mkForce true;
+      "net.ipv6.conf.all.forwarding" = lib.mkForce true;
     };
     kernelModules = [ "sch_cake" ];
   };
@@ -60,7 +60,7 @@
         dhcpcd.enable = false;
         ipv4 = {
           addresses = [{
-            address = "10.48.64.1";
+            address = addresses.inf4Prefix + ".1";
             prefixLength = 18;
           }];
         };
@@ -185,9 +185,15 @@
           ];
         };
         ipv6 = {
+          kea = {
+            enable = true;
+            configFile = /etc/kea/dhcp6-br0-custom.conf;
+          };
           corerad = {
             enable = true;
             interfaceSettings = {
+              managed = false;
+              other_config = true;
               prefix = [
                 {
                   autonomous = true;
@@ -221,7 +227,7 @@
         };
         ipv6 = {
           addresses = [{
-            address = "${addresses.netns6ULAPrefix}::1";
+            address = addresses.netns6ULAPrefix + "::1";
             prefixLength = 64;
           }];
         };
@@ -239,7 +245,7 @@
         };
         ipv6 = {
           addresses = [{
-            address = "${addresses.netns6ULAPrefix}::2";
+            address = addresses.netns6ULAPrefix + "::2";
             prefixLength = 64;
           }];
           routes = [
@@ -296,7 +302,7 @@
         privateKeyFile = "/etc/nixos/secrets/router-vpn.key";
         listenPort = 51820;
 
-        ips = [ "10.48.224.1/24" addresses.lanVpn6ULASpace ];
+        ips = [ (addresses.lanVpn4Prefix + ".1/24") addresses.lanVpn6ULASpace ];
         peers = [
 #          { # Unknown
 #            publicKey = "9ebQTGgXBOEVscX6oT/GBQ2MwsQdrtoev22Z1aXb5k8=";
@@ -312,49 +318,49 @@
             # Cole's PC
             publicKey = "NH4dlhzjZbP1ABYmU//c0fq7prgXtDxbzGLTuWv9Tys=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.4/32" ];
+            allowedIPs = [ (addresses.lanVpn4Prefix + ".4/32") ];
           }
           {
             # My T14 Gen 2
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.5/32" (addresses.lanVpn6ULAPrefix + "::5") ];
+            allowedIPs = [ (addresses.lanVpn4Prefix + ".5/32") (addresses.lanVpn6ULAPrefix + "::5") ];
           }
           {
             # Louis' T480
             publicKey = "/yJI0Y0DrBqE23jnp5WnnhSRpTi+yEv5JIkqXmpWIWk=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.6/32" ];
+            allowedIPs = [ (addresses.lanVpn4Prefix + ".6/32") ];
           }
           {
             # Mom's phone
             publicKey = "fT8TAqpDhtMvoWfoLfTHgGRL2KPeXIRD1UqqWpABaCc=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.7/32" ];
+            allowedIPs = [ (addresses.lanVpn4Prefix + ".7/32") ];
           }
           {
             # Joey's PC
             publicKey = "Nbl7jc2zqUz7qDRXd/vm+5ul1c8L49/zFefyYH0aaGk=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.8/32" ];
+            allowedIPs = [ (addresses.lanVpn4Prefix + ".8/32") ];
           }
           {
             # Louis' PC
             publicKey = "hj4QoLhxembJTBG96+RWTjUZafeNzmz+g04IUr6fP10=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.9/32" ];
+            allowedIPs = [ (addresses.lanVpn4Prefix + ".9/32") ];
           }
           {
             # orionastraeusantimatter
             publicKey = "+L+zYb9TkNvsbC0/OPcyP919c6AmVtBN7mdYJw63dHA=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.10/32" ];
+            allowedIPs = [ (addresses.lanVpn4Prefix + ".10/32") ];
           }
           {
             # orionastraeusantimatter
             publicKey = "jdU2IYgl+Ys4wnxwc/iREh26eVJ/UgUbjFKpfd/LVTM=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.11/32" ];
+            allowedIPs = [ (addresses.lanVpn4Prefix + ".11/32") ];
           }
           {
             # orionastraeusantimatter
@@ -367,6 +373,12 @@
             publicKey = "dgRQM3/eFf125E5rSt8OHMZ9IJGSO7RFQudHpPF8c2I=";
             persistentKeepalive = 25;
             allowedIPs = [ "10.48.224.13/32" (addresses.lanVpn6ULAPrefix + "::13") ];
+          }
+          {
+            # Louis' phone
+            publicKey = "SXh7LE2Db+9T3jpjn+gswsaejSzCoYvPkplc59N6BG4=";
+            persistentKeepalive = 25;
+            allowedIPs = [ "10.48.224.14/32" (addresses.lanVpn6ULAPrefix + "::14") ];
           }
         ];
       };
@@ -416,34 +428,6 @@
         domain = true;
         userServices = true;
       };
-    };
-    unbound = {
-      # Yanked stright from Chayleaf's guide, I don't have a clue how this work
-      package =
-      # Use python with pydbus and dnspython for Unbound
-      let python = pkgs.python3.withPackages (pkgs: with pkgs; [ pydbus dnspython ]);
-      in pkgs.unbound-with-systemd.overrideAttrs(old: {
-      preConfigure = "export PYTHON_VERSION=${python.pythonVersion}";
-      # swig is needed for bindings generation
-      nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.swig ];
-      buildInputs = old.buildInputs ++ [ python ];
-      configureFlags = old.configureFlags ++ [ "--with-pythonmodule" ];
-      # Patch makefile to use correct output directory
-      postPatch = (old.postPatch or "") + ''
-      substituteInPlace Makefile.in \
-        --replace "\$(DESTDIR)\$(PYTHON_SITE_PKG)" "$out/${python.sitePackages}"
-      '';
-      # Export correct PYTHONPATH for the resulting unbound binary
-      # Namely, export both the output module generated by Unbound,
-      # and the modules bundled with the Python defined above
-      postInstall = old.postInstall + ''
-        wrapProgram $out/bin/unbound \
-          --prefix PYTHONPATH : "$out/${python.sitePackages}" \
-          --prefix PYTHONPATH : "${python}/${python.sitePackages}" \
-          --argv0 $out/bin/unbound
-      '';
-      });
-#      enable = true;
     };
 
 

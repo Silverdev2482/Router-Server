@@ -98,6 +98,19 @@
   };
 
   services = {
+    openthread-border-router = {
+      enable = true;
+      backboneInterface = "br0";
+      radio = {
+        url = "spinel+hdlc+uart:///tmp/ttyOTBR";
+      };
+      web = {
+        enable = true;
+        listenAddress = "::1";
+        listenPort = 8082;
+      };
+    };
+    matter-server.enable = true;
     logrotate.checkConfig = false;
     mosquitto = {
       enable = true;
@@ -120,6 +133,10 @@
         "mqtt"
         "tasmota"
         "esphome"
+        "otbr"
+        "thread"
+        "matter"
+        "smlight"
         "radio_browser"
         "shopping_list"
         # Recommended for fast zlib compression
@@ -141,7 +158,7 @@
       };
     };
     nfs = {
-      settings.nfs.nfsd.rdma = true;
+      settings.nfsd.rdma = true;
       server = {
 #        extraNfsdConfig = "rdma = yes";
         enable = true;
@@ -211,6 +228,7 @@
     };
     nginx = {
       enable = true;
+      recommendedProxySettings = true;
       virtualHosts = {
         "kf0nlr.radio" = {
           root = "/srv/www/";
@@ -226,7 +244,7 @@
           forceSSL = true;
           useACMEHost = "kf0nlr.radio";
           locations."/" = {
-            proxyPass = "http://10.48.192.2:56080/";
+            proxyPass = "http://[fd99:2673:4614:4::2]:56080/";
             extraConfig = ''
               allow 127.0.0.0/8; 
               allow ::1/128;
@@ -247,7 +265,7 @@
           forceSSL = true;
           useACMEHost = "kf0nlr.radio";
           locations."/" = {
-            proxyPass = "http://10.48.192.2:8080/";
+            proxyPass = "http://[fd99:2673:4614:4::2]:8080/";
             extraConfig = ''
               allow 127.0.0.0/8; 
               allow ::1/128;
@@ -269,6 +287,22 @@
           useACMEHost = "kf0nlr.radio";
           locations."/" = {
             proxyPass = "http://[::1]:8123/";
+            proxyWebsockets = true;
+            extraConfig = ''
+              allow 127.0.0.0/8; 
+              allow ::1/128;
+              allow ${addresses.all4Space};
+              allow ${addresses.all6PDSpace};
+              allow ${addresses.all6ULASpace};
+              deny all; # Deny all other IPs
+            '';
+          };
+        };
+        "otbr.services.kf0nlr.radio" = {
+          forceSSL = true;
+          useACMEHost = "kf0nlr.radio";
+          locations."/" = {
+            proxyPass = "http://[::1]:8082/";
             proxyWebsockets = true;
             extraConfig = ''
               allow 127.0.0.0/8; 
@@ -305,6 +339,17 @@
 
 
   systemd.services = {
+    otbr-network = {
+      description = "otbr network to tty";
+      requires = [ "network-online.target" ];
+      after = [ "network-online.target" ];
+      wantedBy = [ "otbr-agent.service" ];
+      before = [ "otbr-agent.service" ];
+      path = [pkgs.socat];
+      script = ''
+        socat -d pty,raw,echo=0,link=/tmp/ttyOTBR,ignoreeof "tcp:10.48.0.34:6638"
+      '';
+    };
     qBittorrent-public = {
       # based on the plex.nix service module and
       # https://github.com/qbittorrent/qBittorrent/blob/master/dist/unix/systemd/qbittorrent-nox%40.service.in

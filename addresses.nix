@@ -36,6 +36,8 @@ rec {
   inf4Prefix = "10.48.64";
   inf4Space = inf4Prefix + ".0/18";
 
+  lanVpn4Prefix = "10.48.224";
+
 
   internalAddresses = [
     "127.0.0.0/8"

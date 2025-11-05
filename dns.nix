@@ -41,14 +41,15 @@
     text = ''
       $ORIGIN kf0nlr.radio.
       $TTL      300 ; 5 min
-      @         IN      SOA         dyn.kf0nlr.radio. fidget1206.gmail.com. (
+      @         IN      SOA         kf0nlr.radio. fidget1206.gmail.com. (
                         2025081701  ; Serial
                         3h          ; Refresh after 3 hours
                         1h          ; Retry after 1 hour
                         1w          ; Expire after 1 week
                         1h )        ; Negative caching TTL of 1 day
 
-      @         IN      NS      kf0nlr.radio.
+      @         IN      NS      ns1.kf0nlr.crabdance.com.
+      @         IN      NS      ns2.kf0nlr.crabdance.com.
 
       @         IN      A       ${addresses.router4PublicAddress}
       @         IN      AAAA    ${addresses.router6PDAddress}
@@ -69,6 +70,9 @@
 
       home-assistant.services IN A    10.48.0.1
       home-assistant.services IN AAAA ${addresses.router6ULAAddress}
+
+      otbr.services IN A    10.48.0.1
+      otbr.services IN AAAA ${addresses.router6ULAAddress}
     '';
   };
 
