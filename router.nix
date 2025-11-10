@@ -185,10 +185,6 @@
           ];
         };
         ipv6 = {
-          kea = {
-            enable = true;
-            configFile = /etc/kea/dhcp6-br0-custom.conf;
-          };
           corerad = {
             enable = true;
             interfaceSettings = {

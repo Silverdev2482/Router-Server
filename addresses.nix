@@ -8,6 +8,7 @@ rec {
   inf6PDSpace = all6PDPrefix + "1::/64";
 
   router6PDAddress = lan6PDPrefix + "::1";
+  router6PDSpace = lan6PDPrefix + "::/62";
 
   all6ULAPrefix = "fd99:2673:4614";
   all6ULASpace = all6ULAPrefix + "::/48";
@@ -18,6 +19,7 @@ rec {
   inf6ULASpace = all6ULAPrefix + ":1::/64";
 
   router6ULAAddress = lan6ULAPrefix + "::1";
+  router6ULASpace = lan6ULAPrefix + "::/52";
   
   lanVpn6ULAPrefix = all6ULAPrefix + ":2";
   lanVpn6ULASpace = all6ULAPrefix + ":2::/64";

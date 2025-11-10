@@ -133,11 +133,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1758765258,
-        "narHash": "sha256-orU21BYUJn/7zMhIYbY7T5EDqZ8NtRMSH/f8Qtu047Q=",
+        "lastModified": 1762308139,
+        "narHash": "sha256-h+2rffSCJePpff0kJbT1OYWaiYz0gffUUrPrbs0z4Ec=",
         "owner": "Infinidoge",
         "repo": "nix-minecraft",
-        "rev": "5a6c66b90ab4519b7578b54300abc308008c544e",
+        "rev": "b0b7832d17eca6d2146f15d544b5729b637828cd",
         "type": "github"
       },
       "original": {
@@ -245,11 +245,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1758690382,
-        "narHash": "sha256-NY3kSorgqE5LMm1LqNwGne3ZLMF2/ILgLpFr1fS4X3o=",
+        "lastModified": 1762111121,
+        "narHash": "sha256-4vhDuZ7OZaZmKKrnDpxLZZpGIJvAeMtK6FKLJYUtAdw=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "e643668fd71b949c53f8626614b21ff71a07379d",
+        "rev": "b3d51a0365f6695e7dd5cdf3e180604530ed33b4",
         "type": "github"
       },
       "original": {
@@ -285,13 +285,13 @@
     "openThreadBoarderRouterInitPatch": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-6k65K8xBruX7TVqZq+42jBXdwllKijWWha+S0X/6NKo=",
+        "narHash": "sha256-JfcRBmHPB5J/sgnjww70BsonahGYOKw2N0EkwAFd8gI=",
         "type": "file",
-        "url": "https://github.com/NixOS/nixpkgs/pull/417435.patch"
+        "url": "https://github.com/NixOS/nixpkgs/pull/332296.patch"
       },
       "original": {
         "type": "file",
-        "url": "https://github.com/NixOS/nixpkgs/pull/417435.patch"
+        "url": "https://github.com/NixOS/nixpkgs/pull/332296.patch"
       }
     },
     "root": {

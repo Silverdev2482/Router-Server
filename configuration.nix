@@ -347,7 +347,7 @@
       before = [ "otbr-agent.service" ];
       path = [pkgs.socat];
       script = ''
-        socat -d pty,raw,echo=0,link=/tmp/ttyOTBR,ignoreeof "tcp:10.48.0.34:6638"
+        socat -d pty,raw,echo=0,link=/tmp/ttyOTBR,ignoreeof "tcp:10.48.1.34:6638"
       '';
     };
     qBittorrent-public = {
