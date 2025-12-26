@@ -95,6 +95,17 @@
         ExecStart = ddns;
       };
     };
+    services.irssi = {
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      description = "Start irssi in tmux session";
+      serviceConfig = {
+        User = "Silverdev2482";
+        Type = "forking";
+        ExecStart = ''${pkgs.tmux}/bin/tmux new-session -s irssi -d ${pkgs.irssi}/bin/irssi'';
+        ExecStop = ''${pkgs.tmux}/bin/tmux kill-session -t irssi'';
+      };
+    };
   };
 
   services = {

@@ -2,7 +2,7 @@
   description = "A very basic flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unpatched.url = "github:nixos/nixpkgs/nixos-unstable";
     nix-minecraft.url = "github:Infinidoge/nix-minecraft";
     nixos-router.url = "github:chayleaf/nixos-router";
     my-nvf.url = "github:silverdev2482/nvf";
@@ -12,17 +12,17 @@
     };
   };
 
-  outputs = { self, nixpkgs, ... }@inputs:
+  outputs = { self, nixpkgs-unpatched, ... }@inputs:
     let
       system = "x86_64-linux";
-      nixpkgs-patched = (import nixpkgs { inherit system; }).applyPatches {
-        name = "nixpkgs-patched";
-        src = nixpkgs;
+      nixpkgs = (import nixpkgs-unpatched { inherit system; }).applyPatches {
+        name = "nixpkgs";
+        src = nixpkgs-unpatched;
         patches = [
           inputs.openThreadBoarderRouterInitPatch
         ];
       };
-      patchedNixOS = import (nixpkgs-patched + /nixos/lib/eval-config.nix);
+      patchedNixOS = import (nixpkgs + /nixos/lib/eval-config.nix);
     in {
       formatter.${system} = nixpkgs.legacyPackages.${system}.nixpkgs-fmt;
       nixosConfigurations = {

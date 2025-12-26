@@ -133,11 +133,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1762308139,
-        "narHash": "sha256-h+2rffSCJePpff0kJbT1OYWaiYz0gffUUrPrbs0z4Ec=",
+        "lastModified": 1766542107,
+        "narHash": "sha256-HzOpS/uQXVCOtbwnx3yFaiCgde5JN1BlQ9Gpb2qdBQc=",
         "owner": "Infinidoge",
         "repo": "nix-minecraft",
-        "rev": "b0b7832d17eca6d2146f15d544b5729b637828cd",
+        "rev": "6afb00f25021088e772d52f9d4d7c6aaadbe9ed8",
         "type": "github"
       },
       "original": {
@@ -151,11 +151,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1750711266,
-        "narHash": "sha256-VPP+wzes2jSBSE19ZwLu8b/WGz5PDKjhwozXleUpCfw=",
+        "lastModified": 1763533732,
+        "narHash": "sha256-iXSBJjxZNrQPHtaPXlwHAk/n5H4L4PID8cRDrD130Fo=",
         "owner": "chayleaf",
         "repo": "nixos-router",
-        "rev": "0cf86070433a69012d33fa21fe9a899247b15073",
+        "rev": "3455070b0aaadfa884c1e31df7aef732c17cf4ac",
         "type": "github"
       },
       "original": {
@@ -192,6 +192,22 @@
       "original": {
         "owner": "nix-community",
         "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
+    "nixpkgs-unpatched": {
+      "locked": {
+        "lastModified": 1766651565,
+        "narHash": "sha256-QEhk0eXgyIqTpJ/ehZKg9IKS7EtlWxF3N7DXy42zPfU=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "3e2499d5539c16d0d173ba53552a4ff8547f4539",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -243,22 +259,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_5": {
-      "locked": {
-        "lastModified": 1762111121,
-        "narHash": "sha256-4vhDuZ7OZaZmKKrnDpxLZZpGIJvAeMtK6FKLJYUtAdw=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "b3d51a0365f6695e7dd5cdf3e180604530ed33b4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nvf": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -285,7 +285,7 @@
     "openThreadBoarderRouterInitPatch": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-JfcRBmHPB5J/sgnjww70BsonahGYOKw2N0EkwAFd8gI=",
+        "narHash": "sha256-3hNXF/dTLSIs9lno8i3EcyXO07RIl4CT/9OxYkdfa6U=",
         "type": "file",
         "url": "https://github.com/NixOS/nixpkgs/pull/332296.patch"
       },
@@ -299,7 +299,7 @@
         "my-nvf": "my-nvf",
         "nix-minecraft": "nix-minecraft",
         "nixos-router": "nixos-router",
-        "nixpkgs": "nixpkgs_5",
+        "nixpkgs-unpatched": "nixpkgs-unpatched",
         "openThreadBoarderRouterInitPatch": "openThreadBoarderRouterInitPatch"
       }
     },

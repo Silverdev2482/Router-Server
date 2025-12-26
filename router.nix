@@ -283,11 +283,11 @@
         privateKey = builtins.readFile "/srv/secrets/commercial-vpn.key";
 
         interfaceNamespace = "vpn";
-        ips = [ "10.150.158.52/32" "fd7d:76ee:e68f:a993:4489:8afd:d99f:4088/128" ];
+        ips = [ "10.130.213.185/32" "fd7d:76ee:e68f:a993:17c5:5c24:9c3:54a3/128" ];
         peers = [{
           publicKey = "PyLCXAQT8KkM4T+dUsOQfn+Ub3pGxfGlxkIApuig+hk=";
           # us3.ipv6.vpn.airdns.org   dns doesn't resolve early, easier than specifing unit order.
-          endpoint = "[2602:fc48:7:0:26b1:de4a:93e0:719c]:51820";
+          endpoint = "[2606:6080:1001:13:4f5e:882e:f2b6:df9f]:51820";
           presharedKey = builtins.readFile "/srv/secrets/commercial-vpn.presharedkey";
           persistentKeepalive = 25;
           allowedIPs = [ "0.0.0.0/0" "::/0" ];
@@ -389,7 +389,7 @@
           {
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
             persistentKeepalive = 25;
-            allowedIPs = [ "10.48.128.2/32" ];
+            allowedIPs = [ "10.48.128.2/32" (addresses.wanDirectVpn6ULAPrefix + "::2") (addresses.wanDirectVpn6PDPrefix + "::2") ];
           }
           {
             publicKey = "Ul0RAdEH1/VuXjDkx8mJN64GbmFVG6znk60B6Uoy3RI=";
