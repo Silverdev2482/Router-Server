@@ -174,8 +174,8 @@
 #        extraNfsdConfig = "rdma = yes";
         enable = true;
         exports = "
-          /srv/shares ${addresses.inf4Space}(rw,insecure,async,no_root_squash,acl)
-          /srv/shares ${addresses.inf6ULASpace}(rw,insecure,async,no_root_squash,acl)
+          /srv/shares ${addresses.inf.v4Space}(rw,insecure,async,no_root_squash,acl)
+          /srv/shares ${addresses.inf.ULASpace}(rw,insecure,async,no_root_squash,acl)
         ";
       };
     };
@@ -232,9 +232,9 @@
       authentication = ''
         host all all 127.0.0.0/8 scram-sha-256
         host all all ::1/128 scram-sha-256
-        host all all ${addresses.all4Space} scram-sha-256
-        host all all ${addresses.all6PDSpace} scram-sha-256
-        host all all ${addresses.all6ULASpace} scram-sha-256
+        host all all ${addresses.all.v4Space} scram-sha-256
+        host all all ${addresses.all.PDSpace} scram-sha-256
+        host all all ${addresses.all.ULASpace} scram-sha-256
       '';
     };
     nginx = {
@@ -259,9 +259,9 @@
             extraConfig = ''
               allow 127.0.0.0/8; 
               allow ::1/128;
-              allow ${addresses.all4Space};
-              allow ${addresses.all6PDSpace};
-              allow ${addresses.all6ULASpace};
+              allow ${addresses.all.v4Space};
+              allow ${addresses.all.PDSpace};
+              allow ${addresses.all.ULASpace};
               deny all; # Deny all other IPs
               
               # headers recognized by qBittorrent
@@ -280,9 +280,9 @@
             extraConfig = ''
               allow 127.0.0.0/8; 
               allow ::1/128;
-              allow ${addresses.all4Space};
-              allow ${addresses.all6PDSpace};
-              allow ${addresses.all6ULASpace};
+              allow ${addresses.all.v4Space};
+              allow ${addresses.all.PDSpace};
+              allow ${addresses.all.ULASpace};
               deny all; # Deny all other IPs
               
               # headers recognized by qBittorrent
@@ -300,11 +300,13 @@
             proxyPass = "http://[::1]:8123/";
             proxyWebsockets = true;
             extraConfig = ''
+              proxy_buffering off;
+
               allow 127.0.0.0/8; 
               allow ::1/128;
-              allow ${addresses.all4Space};
-              allow ${addresses.all6PDSpace};
-              allow ${addresses.all6ULASpace};
+              allow ${addresses.all.v4Space};
+              allow ${addresses.all.PDSpace};
+              allow ${addresses.all.ULASpace};
               deny all; # Deny all other IPs
             '';
           };
@@ -318,9 +320,9 @@
             extraConfig = ''
               allow 127.0.0.0/8; 
               allow ::1/128;
-              allow ${addresses.all4Space};
-              allow ${addresses.all6PDSpace};
-              allow ${addresses.all6ULASpace};
+              allow ${addresses.all.v4Space};
+              allow ${addresses.all.PDSpace};
+              allow ${addresses.all.ULASpace};
               deny all; # Deny all other IPs
             '';
           };

@@ -51,28 +51,28 @@
       @         IN      NS      ns1.kf0nlr.crabdance.com.
       @         IN      NS      ns2.kf0nlr.crabdance.com.
 
-      @         IN      A       ${addresses.router4PublicAddress}
-      @         IN      AAAA    ${addresses.router6PDAddress}
+      @         IN      A       ${addresses.router.v4PublicAddress}
+      @         IN      AAAA    ${addresses.router.PDAddress}
 
-      dyn       IN      A       ${addresses.router4PublicAddress}
-      dyn       IN      AAAA    ${addresses.router6PDAddress}
+      dyn       IN      A       ${addresses.router.v4PublicAddress}
+      dyn       IN      AAAA    ${addresses.router.PDAddress}
 
-      astraeus  IN      A       ${addresses.router4PublicAddress}
-      astraeus  IN      AAAA    ${addresses.router6PDAddress}
+      astraeus  IN      A       ${addresses.router.v4PublicAddress}
+      astraeus  IN      AAAA    ${addresses.router.PDAddress}
 
       test      IN      AAAA    ::1
 
       qbittorrent-public.services IN A    10.48.0.1
-      qbittorrent-public.services IN AAAA ${addresses.router6ULAAddress}
+      qbittorrent-public.services IN AAAA ${addresses.router.ULAAddress}
 
       qbittorrent-private.services IN A    10.48.0.1
-      qbittorrent-private.services IN AAAA ${addresses.router6ULAAddress}
+      qbittorrent-private.services IN AAAA ${addresses.router.ULAAddress}
 
       home-assistant.services IN A    10.48.0.1
-      home-assistant.services IN AAAA ${addresses.router6ULAAddress}
+      home-assistant.services IN AAAA ${addresses.router.ULAAddress}
 
       otbr.services IN A    10.48.0.1
-      otbr.services IN AAAA ${addresses.router6ULAAddress}
+      otbr.services IN AAAA ${addresses.router.ULAAddress}
     '';
   };
 

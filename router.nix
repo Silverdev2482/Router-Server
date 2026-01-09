@@ -1,5 +1,17 @@
 { config, pkgs, lib, inputs24router-lib, addresses, ... }:
 
+let 
+  mkPeer = { prefix, suffix, publicKey, public, persistentKeepalive ? 25 }: {
+    inherit publicKey persistentKeepalive;
+    allowedIPs = [
+      (addresses.${prefix}.v4Prefix    + "."  + (builtins.toString suffix) + "/32")
+      (addresses.${prefix}.ULAPrefix + "::" + (lib.trivial.toHexString suffix) + "/128")
+    ] ++ lib.optionals public [
+      (addresses.${prefix}.PDPrefix  + "::" + (lib.trivial.toHexString suffix) + "/128")
+    ];
+  };
+in
+
 {
 
   router.enable = true;
@@ -39,6 +51,7 @@
               ia_pd 2 br0/0/64
               ia_pd 2 ibs1/1/64
               ia_pd 2 wan-direct-vpn/3/64
+              ia_pd 2 russian-vpn/4/64
           '';
         };
         ipv4.enableForwarding = true;
@@ -60,7 +73,7 @@
         dhcpcd.enable = false;
         ipv4 = {
           addresses = [{
-            address = addresses.inf4Prefix + ".1";
+            address = addresses.inf.v4Prefix + ".1";
             prefixLength = 18;
           }];
         };
@@ -72,17 +85,17 @@
               prefix = [
                 {
                   autonomous = true;
-                  prefix = addresses.inf6ULASpace;
+                  prefix = addresses.inf.ULASpace;
                 }
                 {
                   autonomous = true;
-                  prefix = addresses.inf6PDSpace;
+                  prefix = addresses.inf.PDSpace;
                 }
               ];
             };
           };
           addresses = [{
-            address = addresses.inf6ULAPrefix + "::1";
+            address = addresses.inf.ULAPrefix + "::1";
             prefixLength = 64;
             dns = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
             gateways = [{
@@ -100,7 +113,7 @@
             enable = true;
             settings = {
               lease-database = {
-                name = "/var/lib/kea/dhcp4.leases";
+                name = "/var/lib/private/kea/dhcp4.leases";
                 persist = true;
                 type = "memfile";
               };
@@ -193,17 +206,17 @@
               prefix = [
                 {
                   autonomous = true;
-                  prefix = addresses.lan6ULASpace;
+                  prefix = addresses.lan.ULASpace;
                 }
                 {
                   autonomous = true;
-                  prefix = addresses.lan6PDSpace;
+                  prefix = addresses.lan.PDSpace;
                 }
               ];
             };
           };
           addresses = [{
-            address = addresses.lan6ULAPrefix + "::1";
+            address = addresses.lan.ULAPrefix + "::1";
             prefixLength = 64;
             dns = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
             gateways = [{
@@ -223,7 +236,7 @@
         };
         ipv6 = {
           addresses = [{
-            address = addresses.netns6ULAPrefix + "::1";
+            address = addresses.netns.ULAPrefix + "::1";
             prefixLength = 64;
           }];
         };
@@ -241,12 +254,12 @@
         };
         ipv6 = {
           addresses = [{
-            address = addresses.netns6ULAPrefix + "::2";
+            address = addresses.netns.ULAPrefix + "::2";
             prefixLength = 64;
           }];
           routes = [
-            { extraArgs = "${addresses.all6ULASpace} via ${addresses.netns6ULAPrefix}::1"; }
-            { extraArgs = "${addresses.all6PDSpace} via ${addresses.netns6ULAPrefix}::1"; }
+            { extraArgs = "${addresses.all.ULASpace} via ${addresses.netns.ULAPrefix}::1"; }
+            { extraArgs = "${addresses.all.PDSpace} via ${addresses.netns.ULAPrefix}::1"; }
           ];
         };
         networkNamespace = "vpn";
@@ -271,8 +284,8 @@
         '';
       };
       vpn = {
-        #        nftables.textRules = builtins.readFile ./nftables-vpn.nft;
-        extraStartCommands = "  ip -n vpn link set lo up";
+        # nftables.textRules = builtins.readFile ./nftables-vpn.nft;
+        extraStartCommands = "ip -n vpn link set lo up";
       };
     };
   };
@@ -298,8 +311,19 @@
         privateKeyFile = "/etc/nixos/secrets/router-vpn.key";
         listenPort = 51820;
 
-        ips = [ (addresses.lanVpn4Prefix + ".1/24") addresses.lanVpn6ULASpace ];
-        peers = [
+        ips = [ (addresses.lanVPN.v4Prefix + ".1/24") addresses.lanVPN.ULASpace ];
+        peers = builtins.map
+          (args@{ ... }:
+            mkPeer (
+              args
+              //
+              {
+                public = false;
+                prefix = "lanVPN";
+              }
+            )
+          )
+        [
 #          { # Unknown
 #            publicKey = "9ebQTGgXBOEVscX6oT/GBQ2MwsQdrtoev22Z1aXb5k8=";
 #            persistentKeepalive = 25;
@@ -312,69 +336,53 @@
 #          }
           {
             # Cole's PC
+            suffix = 4;
             publicKey = "NH4dlhzjZbP1ABYmU//c0fq7prgXtDxbzGLTuWv9Tys=";
-            persistentKeepalive = 25;
-            allowedIPs = [ (addresses.lanVpn4Prefix + ".4/32") ];
           }
           {
             # My T14 Gen 2
+            suffix = 5;
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
-            persistentKeepalive = 25;
-            allowedIPs = [ (addresses.lanVpn4Prefix + ".5/32") (addresses.lanVpn6ULAPrefix + "::5") ];
           }
           {
             # Louis' T480
+            suffix = 6;
             publicKey = "/yJI0Y0DrBqE23jnp5WnnhSRpTi+yEv5JIkqXmpWIWk=";
-            persistentKeepalive = 25;
-            allowedIPs = [ (addresses.lanVpn4Prefix + ".6/32") ];
           }
           {
             # Mom's phone
+            suffix = 7;
             publicKey = "fT8TAqpDhtMvoWfoLfTHgGRL2KPeXIRD1UqqWpABaCc=";
-            persistentKeepalive = 25;
-            allowedIPs = [ (addresses.lanVpn4Prefix + ".7/32") ];
           }
           {
             # Joey's PC
+            suffix = 8;
             publicKey = "Nbl7jc2zqUz7qDRXd/vm+5ul1c8L49/zFefyYH0aaGk=";
-            persistentKeepalive = 25;
-            allowedIPs = [ (addresses.lanVpn4Prefix + ".8/32") ];
           }
           {
             # Louis' PC
+            suffix = 9;
             publicKey = "hj4QoLhxembJTBG96+RWTjUZafeNzmz+g04IUr6fP10=";
-            persistentKeepalive = 25;
-            allowedIPs = [ (addresses.lanVpn4Prefix + ".9/32") ];
           }
           {
             # orionastraeusantimatter
+            suffix = 10;
             publicKey = "+L+zYb9TkNvsbC0/OPcyP919c6AmVtBN7mdYJw63dHA=";
-            persistentKeepalive = 25;
-            allowedIPs = [ (addresses.lanVpn4Prefix + ".10/32") ];
           }
           {
             # orionastraeusantimatter
+            suffix = 11;
             publicKey = "jdU2IYgl+Ys4wnxwc/iREh26eVJ/UgUbjFKpfd/LVTM=";
-            persistentKeepalive = 25;
-            allowedIPs = [ (addresses.lanVpn4Prefix + ".11/32") ];
           }
           {
             # orionastraeusantimatter
+            suffix = 12;
             publicKey = "iT66uEL4yy4RXoBSLcBDFYNTB17vLuXpAA4axr9vkBs=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.12/32" ];
-          }
-          {
-            # Simonette-Server
-            publicKey = "dgRQM3/eFf125E5rSt8OHMZ9IJGSO7RFQudHpPF8c2I=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.13/32" (addresses.lanVpn6ULAPrefix + "::13") ];
           }
           {
             # Louis' phone
+            suffix = 14;
             publicKey = "SXh7LE2Db+9T3jpjn+gswsaejSzCoYvPkplc59N6BG4=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.224.14/32" (addresses.lanVpn6ULAPrefix + "::14") ];
           }
         ];
       };
@@ -382,27 +390,98 @@
         privateKey = builtins.readFile "/srv/secrets/router-vpn.key";
         listenPort = 51821;
 
-        ips = [ "10.48.128.1/24" addresses.wanDirectVpn6ULASpace ]; # PD space intentionally excluded
+        ips = [ addresses.wanDirectVPN.v4Space addresses.wanDirectVPN.ULASpace ]; # PD space intentionally excluded
 #        ips = [ "10.48.128.1/24" ];
-        peers = [
-          # My T14 Gen 2
+        peers = builtins.map
+          (args@{ ... }:
+            mkPeer (
+              args
+              //
+              {
+                public = true;
+                prefix = "wanDirectVPN";
+              }
+            )
+          )
+        [
           {
+            # My T14 Gen 2
+            suffix = 2;
             publicKey = "2dOocXRe97olfY7mol2Zzgs+Xf37hdU9fZ61OPKC1TY=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.128.2/32" (addresses.wanDirectVpn6ULAPrefix + "::2") (addresses.wanDirectVpn6PDPrefix + "::2") ];
           }
           {
+            suffix = 3;
             publicKey = "Ul0RAdEH1/VuXjDkx8mJN64GbmFVG6znk60B6Uoy3RI=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.128.3/32" ];
           }
           {
             # My Pixel 7 Pro
+            suffix = 4;
             publicKey = "M5PLr1lMH8b4s6qXgDejOo48iVSi9PjVaPQhFQGIIwM=";
-            persistentKeepalive = 25;
-            allowedIPs = [ "10.48.128.4/32" "2605:4a80:2500:20d3::4/128" ];
           }
 
+
+          # Russian activies  
+
+          {
+            # ___EartH___
+            suffix = 5;
+            publicKey = "OkiyCBTuXujAfKRBUyI5yVoy21ofDYZtUnpTpC9RzgA=";
+          }
+          {
+            # LogicLogger
+            suffix = 6;
+            publicKey = "ltKnXoYhjARcfScvl1GGq0i6Cb562XAEz9i4ltQfUF8=";
+          }
+        ];
+      };
+      russian-vpn = {
+        privateKey = builtins.readFile "/srv/secrets/router-vpn.key";
+        listenPort = 51822;
+        type = "amneziawg";
+
+        ips = [ addresses.russianVPN.v4Space addresses.russianVPN.ULASpace ]; # PD space intentionally excluded;
+
+        extraOptions = {
+          Jc = 6;
+          Jmin = 32;
+          Jmax = 128;
+
+          S1 = 16;
+          S2 = 32;
+
+          H1 = 114;
+          H2 = 37;
+          H3 = 203;
+          H4 = 89;
+
+          I1 = 2;
+          I2 = 5;
+          I3 = 9;
+        };
+
+        peers = builtins.map
+          (args@{  ... }:
+            mkPeer (
+              args
+              //
+              {
+                public = true;
+                prefix = "russianVPN";
+              }
+            )
+          )
+        [
+          {
+            # ___EartH___
+            suffix = 1;
+            publicKey = "OkiyCBTuXujAfKRBUyI5yVoy21ofDYZtUnpTpC9RzgA=";
+          }
+          {
+            # ___EartH___
+            suffix = 2;
+            prefix = "russianVPN";
+            publicKey = "ltKnXoYhjARcfScvl1GGq0i6Cb562XAEz9i4ltQfUF8=";
+          }
         ];
       };
       # Possibly another vpn to go through commercial vpn again, idk.

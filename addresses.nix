@@ -1,51 +1,83 @@
 rec {
   
-  all6PDPrefix = "2605:4a80:2500:20d";
-  all6PDSpace = all6PDPrefix + "0::/60";
-  lan6PDPrefix = all6PDPrefix + "0";
-  lan6PDSpace = all6PDPrefix + "0::/64";
-  inf6PDPrefix = all6PDPrefix + "1";
-  inf6PDSpace = all6PDPrefix + "1::/64";
 
-  router6PDAddress = lan6PDPrefix + "::1";
-  router6PDSpace = lan6PDPrefix + "::/62";
+  all = {
+    v4Space = "10.48.0.0/16";
 
-  all6ULAPrefix = "fd99:2673:4614";
-  all6ULASpace = all6ULAPrefix + "::/48";
-  lan6ULAPrefix = all6ULAPrefix + ":0"; # Redundant if you use ::, but kept for caution.
-  lan6ULASpace = all6ULAPrefix + "::/64";
+    PDPrefix = "2605:4a80:2500:20d";
+    PDSpace = all.PDPrefix + "0::/60";
+    ULAPrefix = "fd99:2673:4614";
+    ULASpace = all.ULAPrefix + "::/48";
+  };
 
-  inf6ULAPrefix = all6ULAPrefix + ":1";
-  inf6ULASpace = all6ULAPrefix + ":1::/64";
+  router = {
+    v4PublicAddress = "208.107.235.245";
 
-  router6ULAAddress = lan6ULAPrefix + "::1";
-  router6ULASpace = lan6ULAPrefix + "::/52";
+    PDAddress = lan.PDPrefix + "::1";
+    PDSpace = lan.PDPrefix + "::/61";
+    ULAAddress = lan.ULAPrefix + "::1";
+    ULASpace = lan.ULAPrefix + "::/52";
+  };
+
+  lan = {
+    PDPrefix = all.PDPrefix + "0";
+    PDSpace = all.PDPrefix + "0::/64";
+    ULAPrefix = all.ULAPrefix + ":0"; # Redundant if you use ::, but kept for caution.
+    ULASpace = all.ULAPrefix + "::/64";
+  };
+
+  inf = {
+    v4Prefix = "10.48.64";
+    v4Space = inf.v4Prefix + ".0/18";
+
+    PDPrefix = all.PDPrefix + "1";
+    PDSpace = all.PDPrefix + "1::/64";
+    ULAPrefix = all.ULAPrefix + ":1";
+    ULASpace = all.ULAPrefix + ":1::/64";
+  };
+
+  netns = {
+    ULAPrefix = all.ULAPrefix + ":4";
+    ULASpace = all.ULAPrefix + ":4::/64";
+  };
+
+
+
+  lanVPN = {
+    v4Prefix = "10.48.224";
+
+    ULAPrefix = all.ULAPrefix + ":2";
+    ULASpace = all.ULAPrefix + ":2::/64";
+  };
   
-  lanVpn6ULAPrefix = all6ULAPrefix + ":2";
-  lanVpn6ULASpace = all6ULAPrefix + ":2::/64";
+  wanDirectVPN = {
+    v4Prefix = "10.48.128";
+    v4Space = "10.48.128.0/24";
 
-  wanDirectVpn6ULAPrefix = all6ULAPrefix + ":3";
-  wanDirectVpn6ULASpace = all6ULAPrefix + ":3::/64";
-  wanDirectVpn6PDPrefix = all6PDPrefix + "3";
-  wanDirectVpn6PDSpace = all6PDPrefix + "3::/64";
+    ULAPrefix = all.ULAPrefix + ":3";
+    ULASpace = all.ULAPrefix + ":3::/64";
+    PDPrefix = all.PDPrefix + "3";
+    PDSpace = all.PDPrefix + "3::/64";
+  };
   
-  netns6ULAPrefix = all6ULAPrefix + ":4";
-  netns6ULASpace = all6ULAPrefix + ":4::/64";
+  russianVPN = {
+    v4Prefix = "10.48.160";
+    v4Space = "10.48.160.0/24";
 
-  all4Space = "10.48.0.0/16";
-  router4PublicAddress = "208.107.235.245";
+    ULAPrefix = all.ULAPrefix + ":4";
+    ULASpace = all.ULAPrefix + ":4::/64";
+    PDPrefix = all.PDPrefix + "4";
+    PDSpace = all.PDPrefix + "4::/64"; 
+  };
  
-  inf4Prefix = "10.48.64";
-  inf4Space = inf4Prefix + ".0/18";
 
-  lanVpn4Prefix = "10.48.224";
 
 
   internalAddresses = [
     "127.0.0.0/8"
     "::1/128"
-    all4Space
-    all6PDSpace
-    all6ULASpace
+    all.v4Space
+    all.PDSpace
+    all.ULASpace
   ];
 }

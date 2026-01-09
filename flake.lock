@@ -133,11 +133,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1766542107,
-        "narHash": "sha256-HzOpS/uQXVCOtbwnx3yFaiCgde5JN1BlQ9Gpb2qdBQc=",
+        "lastModified": 1766628630,
+        "narHash": "sha256-ULKQFi7/TohrfOsLP/ESfwvd1DjAuwwshLkgj5lqijM=",
         "owner": "Infinidoge",
         "repo": "nix-minecraft",
-        "rev": "6afb00f25021088e772d52f9d4d7c6aaadbe9ed8",
+        "rev": "649604ce765f36edee9abbb44f65d88575811c41",
         "type": "github"
       },
       "original": {
@@ -285,7 +285,7 @@
     "openThreadBoarderRouterInitPatch": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-3hNXF/dTLSIs9lno8i3EcyXO07RIl4CT/9OxYkdfa6U=",
+        "narHash": "sha256-R58fHbz3ni2BA+LDx/1LKlYVtuw6ufhq40mziYPJU7Y=",
         "type": "file",
         "url": "https://github.com/NixOS/nixpkgs/pull/332296.patch"
       },
